@@ -32,7 +32,7 @@ export function QuickRoutineForm() {
         <input
           type="text"
           name="name"
-          placeholder="Push, Pull, Lower..."
+          placeholder="Torso, Pierna, Push..."
           required
         />
         <button type="submit" className="quick-routine-form__submit" aria-label="Crear rutina">

@@ -9,9 +9,11 @@ import {
   friendshipStatusEnum,
   friendships,
   notifications,
+  runningSessions,
   routineTemplateItems,
   routineTemplates,
   weeklyPlanEntries,
+  workoutSessions,
 } from "@/server/db/schema";
 import { compareWeekdayOrder, getWeekdayShortLabel } from "@/server/training/week";
 
@@ -30,6 +32,12 @@ export type AppSnapshot = {
     title: string;
     meta: string;
     kind: "routine" | "run" | "library";
+  }>;
+  recentActivity: Array<{
+    id: string;
+    title: string;
+    meta: string;
+    kind: "routine" | "run";
   }>;
   weeklyPlan: Array<{
     id: string;
@@ -67,8 +75,130 @@ export type AppSnapshot = {
   }>;
 };
 
+function normalizeText(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
 function formatGoal(goal: string) {
-  return goal.trim() || "Custom";
+  const normalized = normalizeText(goal);
+
+  if (!normalized) {
+    return "Personal";
+  }
+
+  if (normalized.includes("musculo") || normalized.includes("muscle")) {
+    return "Musculo";
+  }
+
+  if (normalized.includes("grasa") || normalized.includes("fat")) {
+    return "Definicion";
+  }
+
+  if (normalized.includes("fuerte") || normalized.includes("strong")) {
+    return "Fuerza";
+  }
+
+  if (normalized.includes("hibrid")) {
+    return "Hibrido";
+  }
+
+  if (normalized.includes("consisten")) {
+    return "Constancia";
+  }
+
+  return goal.trim();
+}
+
+function formatExperienceLevel(level: string) {
+  const normalized = normalizeText(level);
+
+  if (!normalized) {
+    return "--";
+  }
+
+  if (normalized.includes("beginner") || normalized.includes("principiante")) {
+    return "Principiante";
+  }
+
+  if (normalized.includes("intermediate") || normalized.includes("intermedio")) {
+    return "Intermedio";
+  }
+
+  if (normalized.includes("advanced") || normalized.includes("avanzado")) {
+    return "Avanzado";
+  }
+
+  return level.trim();
+}
+
+function formatActivityDate(date: Date) {
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
+function formatRunningKind(kind: string) {
+  switch (kind) {
+    case "easy":
+      return "Rodaje suave";
+    case "tempo":
+      return "Tempo";
+    case "intervals":
+      return "Series";
+    case "long_run":
+      return "Tirada larga";
+    case "recovery":
+      return "Recuperacion";
+    default:
+      return "Libre";
+  }
+}
+
+function formatMuscleGroup(group: string) {
+  switch (normalizeText(group)) {
+    case "chest":
+      return "Pecho";
+    case "back":
+      return "Espalda";
+    case "shoulders":
+      return "Hombros";
+    case "legs":
+      return "Pierna";
+    case "hamstrings":
+      return "Isquios";
+    case "glutes":
+      return "Gluteo";
+    case "cardio":
+      return "Cardio";
+    case "core":
+      return "Core";
+    default:
+      return group || "General";
+  }
+}
+
+function formatEquipment(equipment: string) {
+  switch (normalizeText(equipment)) {
+    case "barbell":
+      return "Barra";
+    case "dumbbells":
+      return "Mancuernas";
+    case "machine":
+      return "Maquina";
+    case "bodyweight":
+      return "Peso corporal";
+    case "cable":
+      return "Cable";
+    case "shoes":
+      return "Zapatillas";
+    default:
+      return equipment || "Mixto";
+  }
 }
 
 export async function getAppSnapshot(params: {
@@ -156,6 +286,31 @@ export async function getAppSnapshot(params: {
     .groupBy(weeklyPlanEntries.id, routineTemplates.id)
     .limit(7);
 
+  const recentWorkouts = await db
+    .select({
+      id: workoutSessions.id,
+      date: workoutSessions.finishedAt,
+      fallbackDate: workoutSessions.startedAt,
+      routineName: routineTemplates.name,
+    })
+    .from(workoutSessions)
+    .leftJoin(routineTemplates, eq(routineTemplates.id, workoutSessions.routineTemplateId))
+    .where(eq(workoutSessions.userId, user.id))
+    .orderBy(desc(workoutSessions.startedAt))
+    .limit(4);
+
+  const recentRuns = await db
+    .select({
+      id: runningSessions.id,
+      date: runningSessions.date,
+      distanceKm: runningSessions.distanceKm,
+      kind: runningSessions.kind,
+    })
+    .from(runningSessions)
+    .where(eq(runningSessions.userId, user.id))
+    .orderBy(desc(runningSessions.date))
+    .limit(4);
+
   const library = await db
     .select({
       id: exercises.id,
@@ -180,11 +335,11 @@ export async function getAppSnapshot(params: {
       id: entry.id,
       dayKey: entry.weekdayKey,
       dayLabel: getWeekdayShortLabel(entry.weekdayKey),
-      title: entry.routineName ?? "Run target",
+      title: entry.routineName ?? "Objetivo run",
       meta:
         entry.routineName && entry.routineId
-          ? `${Number(entry.routineItemCount)} exercises`
-          : `${entry.runningTargetKm ?? 0} km target`,
+          ? `${Number(entry.routineItemCount)} ejercicios`
+          : `${entry.runningTargetKm ?? 0} km objetivo`,
       kind: entry.routineId ? ("routine" as const) : ("run" as const),
     }))
     .sort((left, right) => compareWeekdayOrder(left.dayKey, right.dayKey));
@@ -200,17 +355,17 @@ export async function getAppSnapshot(params: {
   );
 
   const firstRoutine = routines[0];
-  const heroChip = profile.goal ? formatGoal(profile.goal) : "Foundation";
+  const heroChip = profile.goal ? formatGoal(profile.goal) : "Base";
   const heroTitle =
     orderedWeeklyPlan.length > 0
       ? `${orderedWeeklyPlan[0]?.dayLabel}: ${orderedWeeklyPlan[0]?.title}`
       : firstRoutine
-        ? `${firstRoutine.name} is ready.`
-        : "Build your first week.";
+        ? `${firstRoutine.name} esta lista.`
+        : "Crea tu primera semana.";
   const heroMeta = [
-    `${profile.preferredWeeklySessions ?? 0}x week`,
-    `${planCount} slots`,
-    `${libraryCount} exercises`,
+    `${profile.preferredWeeklySessions ?? 0}x semana`,
+    `${planCount} bloques`,
+    `${libraryCount} ejercicios`,
   ];
 
   const todayItems =
@@ -222,56 +377,85 @@ export async function getAppSnapshot(params: {
         }))
       : [
           {
-            title: "Explore library",
-            meta: `${libraryCount} exercises ready`,
+            title: "Explora la biblioteca",
+            meta: `${libraryCount} ejercicios disponibles`,
             kind: "library" as const,
           },
           {
-            title: "Set weekly target",
-            meta: `${profile.preferredWeeklySessions ?? 0} sessions per week`,
+            title: "Ajusta tu objetivo",
+            meta: `${profile.preferredWeeklySessions ?? 0} sesiones por semana`,
             kind: "run" as const,
           },
         ];
+
+  const recentActivity = [
+    ...recentWorkouts.map((session) => {
+      const sessionDate = session.date ?? session.fallbackDate;
+
+      return {
+        id: session.id,
+        sortAt: sessionDate,
+        title: session.routineName ?? "Sesion libre",
+        meta: `Fuerza · ${formatActivityDate(sessionDate)}`,
+        kind: "routine" as const,
+      };
+    }),
+    ...recentRuns.map((session) => ({
+      id: session.id,
+      sortAt: session.date,
+      title: `${session.distanceKm.toFixed(1)} km`,
+      meta: `${formatRunningKind(session.kind)} · ${formatActivityDate(session.date)}`,
+      kind: "run" as const,
+    })),
+  ]
+    .sort((left, right) => right.sortAt.getTime() - left.sortAt.getTime())
+    .slice(0, 4)
+    .map((entry) => {
+      const { sortAt, ...rest } = entry;
+      void sortAt;
+
+      return rest;
+    });
 
   const socialPreview =
     friendCount > 0
       ? [
           {
-            name: "Friends",
-            caption: "connected",
+            name: "Amistades",
+            caption: "activas",
             value: `${friendCount}`,
             tint: "violet" as const,
           },
           {
-            name: "Pending",
-            caption: "to review",
+            name: "Pendientes",
+            caption: "por revisar",
             value: `${pendingCount}`,
             tint: "cyan" as const,
           },
           {
-            name: "Alerts",
-            caption: "notifications",
+            name: "Avisos",
+            caption: "notificaciones",
             value: `${notificationCount}`,
             tint: "pink" as const,
           },
         ]
       : [
           {
-            name: "Circle",
-            caption: "friends",
+            name: "Circulo",
+            caption: "amistades",
             value: "0",
             tint: "violet" as const,
           },
           {
-            name: "Pending",
-            caption: "requests",
+            name: "Pendientes",
+            caption: "solicitudes",
             value: `${pendingCount}`,
             tint: "cyan" as const,
           },
           {
-            name: "Quiet",
-            caption: "for now",
-            value: "Start",
+            name: "Calma",
+            caption: "de momento",
+            value: "Invita",
             tint: "pink" as const,
           },
         ];
@@ -285,21 +469,22 @@ export async function getAppSnapshot(params: {
     quickStats: [
       {
         key: "goal",
-        label: "Goal",
+        label: "Objetivo",
         value: formatGoal(profile.goal),
       },
       {
         key: "routines",
-        label: "Routines",
+        label: "Rutinas",
         value: `${routineCount}`,
       },
       {
         key: "library",
-        label: "Library",
+        label: "Biblioteca",
         value: `${libraryCount}`,
       },
     ],
     todayItems,
+    recentActivity,
     weeklyPlan: orderedWeeklyPlan,
     socialPreview,
     routines: routines.map((routine) => ({
@@ -310,8 +495,10 @@ export async function getAppSnapshot(params: {
     library: library.map((exercise) => ({
       id: exercise.id,
       name: exercise.name,
-      primaryMuscleGroup: exercise.primaryMuscleGroup || exercise.categoryName || "General",
-      equipment: exercise.equipment || "Mixed",
+      primaryMuscleGroup: formatMuscleGroup(
+        exercise.primaryMuscleGroup || exercise.categoryName || "General",
+      ),
+      equipment: formatEquipment(exercise.equipment || "Mixed"),
     })),
     socialCounts: {
       friends: friendCount,
@@ -320,18 +507,18 @@ export async function getAppSnapshot(params: {
     },
     profileMetrics: [
       {
-        label: "Weight",
+        label: "Peso",
         value: profile.weightKg ? `${profile.weightKg}` : "--",
       },
       {
-        label: "Week",
+        label: "Semana",
         value: profile.preferredWeeklySessions
           ? `${profile.preferredWeeklySessions}x`
           : "--",
       },
       {
-        label: "Level",
-        value: profile.experienceLevel || "--",
+        label: "Nivel",
+        value: formatExperienceLevel(profile.experienceLevel),
       },
     ],
   };

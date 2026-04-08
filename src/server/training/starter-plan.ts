@@ -58,46 +58,46 @@ function withDay(routine: RoutineBlueprint, weekdayKey: WeekdayKey): RoutineBlue
 }
 
 const baseRoutines = {
-  fullBodyBase: createRoutine("Full Body Base", "monday", [
+  fullBodyBase: createRoutine("Cuerpo completo", "monday", [
     { name: "Back Squat", targetSets: 3, targetRepsMin: 5, targetRepsMax: 8, targetRir: 2, restSeconds: 150 },
     { name: "Bench Press", targetSets: 3, targetRepsMin: 6, targetRepsMax: 8, targetRir: 2, restSeconds: 120 },
     { name: "Chest-Supported Row", targetSets: 3, targetRepsMin: 8, targetRepsMax: 12, targetRir: 2, restSeconds: 90 },
     { name: "Romanian Deadlift", targetSets: 3, targetRepsMin: 8, targetRepsMax: 10, targetRir: 2, restSeconds: 120 },
     { name: "Plank", targetSets: 3, targetRepsMin: 30, targetRepsMax: 45, restSeconds: 45 },
   ]),
-  upperPrime: createRoutine("Upper Prime", "monday", [
+  upperPrime: createRoutine("Torso A", "monday", [
     { name: "Bench Press", targetSets: 3, targetRepsMin: 5, targetRepsMax: 8, targetRir: 2, restSeconds: 150 },
     { name: "Chest-Supported Row", targetSets: 3, targetRepsMin: 8, targetRepsMax: 12, targetRir: 2, restSeconds: 90 },
     { name: "Overhead Press", targetSets: 3, targetRepsMin: 6, targetRepsMax: 10, targetRir: 2, restSeconds: 120 },
     { name: "Pull-Up", targetSets: 3, targetRepsMin: 5, targetRepsMax: 8, targetRir: 1, restSeconds: 120 },
     { name: "Lateral Raise", targetSets: 3, targetRepsMin: 12, targetRepsMax: 15, restSeconds: 45 },
   ]),
-  lowerFocus: createRoutine("Lower Focus", "thursday", [
+  lowerFocus: createRoutine("Pierna A", "thursday", [
     { name: "Back Squat", targetSets: 4, targetRepsMin: 5, targetRepsMax: 8, targetRir: 2, restSeconds: 150 },
     { name: "Romanian Deadlift", targetSets: 3, targetRepsMin: 6, targetRepsMax: 8, targetRir: 2, restSeconds: 120 },
     { name: "Leg Press", targetSets: 3, targetRepsMin: 10, targetRepsMax: 15, targetRir: 2, restSeconds: 90 },
     { name: "Walking Lunges", targetSets: 3, targetRepsMin: 10, targetRepsMax: 12, targetRir: 2, restSeconds: 75 },
     { name: "Leg Curl", targetSets: 3, targetRepsMin: 10, targetRepsMax: 14, targetRir: 2, restSeconds: 60 },
   ]),
-  pushFlow: createRoutine("Push Flow", "monday", [
+  pushFlow: createRoutine("Empuje", "monday", [
     { name: "Bench Press", targetSets: 4, targetRepsMin: 5, targetRepsMax: 8, targetRir: 2, restSeconds: 150 },
     { name: "Incline Dumbbell Press", targetSets: 3, targetRepsMin: 8, targetRepsMax: 10, targetRir: 2, restSeconds: 90 },
     { name: "Overhead Press", targetSets: 3, targetRepsMin: 6, targetRepsMax: 10, targetRir: 2, restSeconds: 120 },
     { name: "Lateral Raise", targetSets: 3, targetRepsMin: 12, targetRepsMax: 15, restSeconds: 45 },
   ]),
-  pullFlow: createRoutine("Pull Flow", "wednesday", [
+  pullFlow: createRoutine("Tiron", "wednesday", [
     { name: "Pull-Up", targetSets: 4, targetRepsMin: 5, targetRepsMax: 8, targetRir: 1, restSeconds: 120 },
     { name: "Chest-Supported Row", targetSets: 3, targetRepsMin: 8, targetRepsMax: 12, targetRir: 2, restSeconds: 90 },
     { name: "Seated Cable Row", targetSets: 3, targetRepsMin: 10, targetRepsMax: 12, targetRir: 2, restSeconds: 75 },
     { name: "Lateral Raise", targetSets: 3, targetRepsMin: 12, targetRepsMax: 15, restSeconds: 45 },
   ]),
-  lowerPower: createRoutine("Lower Power", "friday", [
+  lowerPower: createRoutine("Pierna potencia", "friday", [
     { name: "Back Squat", targetSets: 4, targetRepsMin: 4, targetRepsMax: 6, targetRir: 2, restSeconds: 150 },
     { name: "Hip Thrust", targetSets: 3, targetRepsMin: 8, targetRepsMax: 10, targetRir: 2, restSeconds: 90 },
     { name: "Bulgarian Split Squat", targetSets: 3, targetRepsMin: 8, targetRepsMax: 10, targetRir: 2, restSeconds: 75 },
     { name: "Leg Curl", targetSets: 3, targetRepsMin: 10, targetRepsMax: 14, targetRir: 2, restSeconds: 60 },
   ]),
-  upperVolume: createRoutine("Upper Volume", "tuesday", [
+  upperVolume: createRoutine("Torso volumen", "tuesday", [
     { name: "Incline Dumbbell Press", targetSets: 3, targetRepsMin: 8, targetRepsMax: 12, targetRir: 2, restSeconds: 75 },
     { name: "Lat Pulldown", targetSets: 3, targetRepsMin: 8, targetRepsMax: 12, targetRir: 2, restSeconds: 75 },
     { name: "Seated Cable Row", targetSets: 3, targetRepsMin: 10, targetRepsMax: 12, targetRir: 2, restSeconds: 75 },
@@ -107,10 +107,13 @@ const baseRoutines = {
 } as const;
 
 function buildStarterBlueprint(profile: UserProfile): StarterWeekBlueprint {
-  const goal = profile.goal.toLowerCase();
+  const goal = profile.goal
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
   const sessions = Math.max(1, Math.min(profile.preferredWeeklySessions ?? 3, 6));
-  const isHybrid = goal.includes("hybrid");
-  const isConsistency = goal.includes("consistency");
+  const isHybrid = goal.includes("hybrid") || goal.includes("hibrid");
+  const isConsistency = goal.includes("consistency") || goal.includes("consisten");
 
   if (isHybrid) {
     if (sessions <= 2) {

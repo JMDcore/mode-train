@@ -13,14 +13,14 @@ const initialState: ProfileActionState = {
 };
 
 const goalOptions = [
-  "Build muscle",
-  "Lose fat",
-  "Get stronger",
-  "Hybrid fitness",
-  "Consistency first",
+  "Ganar musculo",
+  "Perder grasa",
+  "Ser mas fuerte",
+  "Fitness hibrido",
+  "Crear constancia",
 ];
 
-const levelOptions = ["Beginner", "Intermediate", "Advanced"];
+const levelOptions = ["Principiante", "Intermedio", "Avanzado"];
 
 export function OnboardingCard(props: { profile: UserProfile }) {
   const [state, formAction] = useActionState(completeOnboardingAction, initialState);
@@ -30,7 +30,7 @@ export function OnboardingCard(props: { profile: UserProfile }) {
       <div className="auth-card__brand">
         <div className="auth-card__mark">MT</div>
         <div>
-          <p className="auth-card__eyebrow">Onboarding</p>
+          <p className="auth-card__eyebrow">Perfil inicial</p>
           <h1 className="auth-card__title">Ajusta tu base</h1>
         </div>
       </div>

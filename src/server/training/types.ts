@@ -5,3 +5,5 @@ export type TrainingActionState = {
 
 export type RoutineActionState = TrainingActionState;
 export type StarterPlanActionState = TrainingActionState;
+export type WorkoutLogActionState = TrainingActionState;
+export type RunLogActionState = TrainingActionState;

@@ -24,7 +24,9 @@ import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { QuickRunForm } from "@/components/training/quick-run-form";
 import { QuickRoutineForm } from "@/components/training/quick-routine-form";
+import { RoutineLogButton } from "@/components/training/routine-log-button";
 import { StarterWeekButton } from "@/components/training/starter-week-button";
 import { cn } from "@/lib/utils";
 import type { AuthUser } from "@/server/auth/user";
@@ -37,27 +39,27 @@ const transition = {
 };
 
 const tabs = [
-  { key: "home", label: "Home", icon: House },
-  { key: "train", label: "Train", icon: Dumbbell },
-  { key: "social", label: "Circle", icon: Users },
-  { key: "profile", label: "Me", icon: User },
+  { key: "home", label: "Inicio", icon: House },
+  { key: "train", label: "Entrena", icon: Dumbbell },
+  { key: "social", label: "Circulo", icon: Users },
+  { key: "profile", label: "Yo", icon: User },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
 type QuickAction = { label: string; icon: LucideIcon; targetTab: TabKey };
 
 const headerCopy: Record<TabKey, { eyebrow: string; title: string }> = {
-  home: { eyebrow: "Wednesday", title: "Tonight" },
-  train: { eyebrow: "Session", title: "Train" },
-  social: { eyebrow: "Private", title: "Circle" },
-  profile: { eyebrow: "Progress", title: "Me" },
+  home: { eyebrow: "Hoy", title: "Panel" },
+  train: { eyebrow: "Plan semanal", title: "Entrena" },
+  social: { eyebrow: "Privado", title: "Circulo" },
+  profile: { eyebrow: "Progreso", title: "Perfil" },
 };
 
 const quickActions = [
   { label: "Plan", icon: CalendarDays, targetTab: "train" },
-  { label: "Log", icon: Play, targetTab: "train" },
-  { label: "Circle", icon: Users, targetTab: "social" },
-  { label: "Me", icon: User, targetTab: "profile" },
+  { label: "Registrar", icon: Play, targetTab: "train" },
+  { label: "Circulo", icon: Users, targetTab: "social" },
+  { label: "Perfil", icon: User, targetTab: "profile" },
 ] satisfies QuickAction[];
 
 const statIconMap: Record<string, LucideIcon> = {
@@ -65,6 +67,58 @@ const statIconMap: Record<string, LucideIcon> = {
   routines: Dumbbell,
   library: Route,
 };
+
+function normalizeCopyValue(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
+function translateGoal(value: string) {
+  const normalized = normalizeCopyValue(value);
+
+  if (normalized.includes("musculo") || normalized.includes("muscle")) {
+    return "Ganar musculo";
+  }
+
+  if (normalized.includes("grasa") || normalized.includes("fat")) {
+    return "Perder grasa";
+  }
+
+  if (normalized.includes("fuerte") || normalized.includes("strong")) {
+    return "Ser mas fuerte";
+  }
+
+  if (normalized.includes("hibrid") || normalized.includes("hybrid")) {
+    return "Fitness hibrido";
+  }
+
+  if (normalized.includes("consisten")) {
+    return "Crear constancia";
+  }
+
+  return value;
+}
+
+function translateLevel(value: string) {
+  const normalized = normalizeCopyValue(value);
+
+  if (normalized.includes("beginner") || normalized.includes("principiante")) {
+    return "Principiante";
+  }
+
+  if (normalized.includes("intermediate") || normalized.includes("intermedio")) {
+    return "Intermedio";
+  }
+
+  if (normalized.includes("advanced") || normalized.includes("avanzado")) {
+    return "Avanzado";
+  }
+
+  return value;
+}
 
 export function ModeTrainApp(props: {
   user: AuthUser;
@@ -91,10 +145,10 @@ export function ModeTrainApp(props: {
           </div>
 
           <div className="header-actions">
-            <button type="button" className="icon-button" aria-label="Notifications">
+            <button type="button" className="icon-button" aria-label="Notificaciones">
               <Bell size={18} strokeWidth={2.1} />
             </button>
-            <button type="button" className="profile-badge" aria-label="Profile">
+            <button type="button" className="profile-badge" aria-label="Perfil">
               {props.user.initials}
             </button>
           </div>
@@ -177,14 +231,14 @@ function HomeScreen(props: {
           </div>
           <h2 className="hero-card__title">{props.snapshot.heroTitle}</h2>
           <div className="hero-meta">
-            <MetaPill icon={Clock3} label={props.snapshot.heroMeta[0] ?? "0x week"} />
-            <MetaPill icon={Zap} label={props.snapshot.heroMeta[1] ?? "0 routines"} />
-            <MetaPill icon={Target} label={props.snapshot.heroMeta[2] ?? "0 exercises"} />
+            <MetaPill icon={Clock3} label={props.snapshot.heroMeta[0] ?? "0x semana"} />
+            <MetaPill icon={Zap} label={props.snapshot.heroMeta[1] ?? "0 bloques"} />
+            <MetaPill icon={Target} label={props.snapshot.heroMeta[2] ?? "0 ejercicios"} />
           </div>
         </div>
 
         <div className="hero-card__aside">
-          <ProgressRing value={props.snapshot.readiness} label="Ready" />
+          <ProgressRing value={props.snapshot.readiness} label="Listo" />
           {props.snapshot.canGenerateStarterWeek ? (
             <StarterWeekButton className="primary-button" />
           ) : (
@@ -194,7 +248,7 @@ function HomeScreen(props: {
               onClick={() => props.onNavigate("train")}
             >
               <Play size={16} strokeWidth={2.4} />
-              Start
+              Ver plan
             </button>
           )}
         </div>
@@ -222,7 +276,7 @@ function HomeScreen(props: {
         ))}
       </div>
 
-      <ScreenSection icon={CalendarDays} title="Today">
+      <ScreenSection icon={CalendarDays} title="Hoy">
         <div className="list-stack">
           {props.snapshot.todayItems.map((item) => (
             <RowCard
@@ -241,17 +295,23 @@ function HomeScreen(props: {
         </div>
       </ScreenSection>
 
-      <ScreenSection icon={Users} title="Circle">
-        <div className="avatar-row">
-          {props.snapshot.socialPreview.map((person) => (
-            <AvatarCard
-              key={person.name}
-              name={person.name}
-              caption={person.caption}
-              value={person.value}
-              tint={person.tint}
+      <ScreenSection icon={Activity} title="Actividad">
+        <div className="list-stack">
+          {props.snapshot.recentActivity.length > 0 ? (
+            props.snapshot.recentActivity.map((item) => (
+              <RowCard
+                key={item.id}
+                icon={item.kind === "run" ? Footprints : Dumbbell}
+                title={item.title}
+                meta={item.meta}
+              />
+            ))
+          ) : (
+            <EmptyCard
+              title="Todavia no hay actividad"
+              body="En cuanto registres una sesion o una carrera, veras aqui tu actividad reciente."
             />
-          ))}
+          )}
         </div>
       </ScreenSection>
     </>
@@ -264,22 +324,21 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
       <SurfaceCard tone="accent">
         <div className="compact-hero">
           <div>
-            <p className="card-kicker">Plan</p>
-            <h2 className="compact-hero__title">
-              {props.snapshot.weeklyPlan[0]?.title ?? "Build your first week"}
-            </h2>
+            <p className="card-kicker">Plan semanal</p>
+            <h2 className="compact-hero__title">{props.snapshot.weeklyPlan[0]?.title ?? "Crea tu primera semana"}</h2>
           </div>
           {props.snapshot.canGenerateStarterWeek ? (
             <StarterWeekButton compact />
           ) : (
-            <button type="button" className="primary-icon-button" aria-label="Start session">
-              <Play size={16} strokeWidth={2.4} />
-            </button>
+            <div className="pill-soft">
+              <CalendarDays size={14} strokeWidth={2.2} />
+              {props.snapshot.weeklyPlan.length} dias
+            </div>
           )}
         </div>
       </SurfaceCard>
 
-      <ScreenSection icon={CalendarDays} title="Week">
+      <ScreenSection icon={CalendarDays} title="Semana">
         <div className="list-stack">
           {props.snapshot.weeklyPlan.length > 0 ? (
             props.snapshot.weeklyPlan.map((entry) => (
@@ -292,14 +351,14 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
             ))
           ) : (
             <EmptyCard
-              title="Starter week ready to build"
+              title="Semana inicial lista para crear"
               body="Un toque y te montamos una semana inicial con rutinas y planning real segun tu perfil."
             />
           )}
         </div>
       </ScreenSection>
 
-      <ScreenSection icon={Dumbbell} title="Routines">
+      <ScreenSection icon={Dumbbell} title="Rutinas">
         <QuickRoutineForm />
         <div className="list-stack">
           {props.snapshot.routines.length > 0 ? (
@@ -308,20 +367,25 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
                 key={routine.id}
                 icon={Dumbbell}
                 name={routine.name}
-                meta={`${routine.itemCount} exercises`}
-                chips={["Routine", "Ready"]}
+                meta={`${routine.itemCount} ejercicios`}
+                chips={["Rutina", "Lista"]}
+                footer={<RoutineLogButton routineTemplateId={routine.id} />}
               />
             ))
           ) : (
             <EmptyCard
-              title="No routines yet"
+              title="Todavia no tienes rutinas"
               body="Crea una rutina rapida y luego iremos anadiendo bloques y ejercicios."
             />
           )}
         </div>
       </ScreenSection>
 
-      <ScreenSection icon={Route} title="Library">
+      <ScreenSection icon={Footprints} title="Carrera rapida">
+        <QuickRunForm />
+      </ScreenSection>
+
+      <ScreenSection icon={Route} title="Biblioteca">
         <div className="list-stack">
           {props.snapshot.library.map((exercise) => (
             <WorkoutCard
@@ -344,8 +408,8 @@ function SocialScreen(props: { snapshot: AppSnapshot }) {
       <SurfaceCard tone="accent">
         <div className="compact-hero">
           <div>
-            <p className="card-kicker">Friends only</p>
-            <h2 className="compact-hero__title">Private circle</h2>
+            <p className="card-kicker">Solo amistades</p>
+            <h2 className="compact-hero__title">Circulo privado</h2>
           </div>
           <div className="pill-soft">
             <Users size={14} strokeWidth={2.2} />
@@ -355,12 +419,12 @@ function SocialScreen(props: { snapshot: AppSnapshot }) {
       </SurfaceCard>
 
       <div className="social-stat-grid">
-        <MetricTile icon={Users} label="Friends" value={`${props.snapshot.socialCounts.friends}`} />
-        <MetricTile icon={Bell} label="Alerts" value={`${props.snapshot.socialCounts.notifications}`} />
-        <MetricTile icon={Plus} label="Pending" value={`${props.snapshot.socialCounts.pending}`} />
+        <MetricTile icon={Users} label="Amistades" value={`${props.snapshot.socialCounts.friends}`} />
+        <MetricTile icon={Bell} label="Avisos" value={`${props.snapshot.socialCounts.notifications}`} />
+        <MetricTile icon={Plus} label="Pendientes" value={`${props.snapshot.socialCounts.pending}`} />
       </div>
 
-      <ScreenSection icon={Activity} title="Status">
+      <ScreenSection icon={Activity} title="Estado">
         <div className="list-stack">
           {props.snapshot.socialCounts.friends > 0 ? (
             props.snapshot.socialPreview.map((item) => (
@@ -374,7 +438,7 @@ function SocialScreen(props: { snapshot: AppSnapshot }) {
             ))
           ) : (
             <EmptyCard
-              title="Your circle is still empty"
+              title="Tu circulo todavia esta vacio"
               body="La capa social ya esta lista para cuando empieces a invitar amistades privadas."
             />
           )}
@@ -387,8 +451,8 @@ function SocialScreen(props: { snapshot: AppSnapshot }) {
             <Trophy size={18} strokeWidth={2.2} />
           </div>
           <div>
-            <p className="card-kicker">Challenge</p>
-            <h3 className="challenge-card__title">4 sessions this week</h3>
+            <p className="card-kicker">Reto</p>
+            <h3 className="challenge-card__title">4 sesiones esta semana</h3>
           </div>
           <ChevronRight size={18} strokeWidth={2.2} className="text-white/50" />
         </div>
@@ -424,22 +488,22 @@ function ProfileScreen(props: {
         ))}
       </div>
 
-      <ScreenSection icon={Trophy} title="Profile">
+      <ScreenSection icon={Trophy} title="Perfil">
         <div className="list-stack">
-          <CompactRow label="Goal" value={props.profile.goal} />
-          <CompactRow label="Experience" value={props.profile.experienceLevel} />
+          <CompactRow label="Objetivo" value={translateGoal(props.profile.goal)} />
+          <CompactRow label="Nivel" value={translateLevel(props.profile.experienceLevel)} />
           <CompactRow
-            label="Weekly target"
-            value={`${props.profile.preferredWeeklySessions ?? 0} sessions`}
+            label="Objetivo semanal"
+            value={`${props.profile.preferredWeeklySessions ?? 0} sesiones`}
           />
         </div>
       </ScreenSection>
 
-      <ScreenSection icon={Camera} title="Progress">
+      <ScreenSection icon={Camera} title="Progreso">
         <div className="gallery-grid">
-          <ProgressFrame label="Week 1" />
-          <ProgressFrame label="Week 5" tone="mid" />
-          <ProgressFrame label="Week 9" tone="late" />
+          <ProgressFrame label="Semana 1" />
+          <ProgressFrame label="Semana 5" tone="mid" />
+          <ProgressFrame label="Semana 9" tone="late" />
         </div>
       </ScreenSection>
 
@@ -539,7 +603,7 @@ function RowCard(props: { icon: LucideIcon; title: string; meta: string }) {
   const Icon = props.icon;
 
   return (
-    <button type="button" className="row-card">
+    <div className="row-card">
       <span className="row-card__icon">
         <Icon size={16} strokeWidth={2.2} />
       </span>
@@ -547,26 +611,7 @@ function RowCard(props: { icon: LucideIcon; title: string; meta: string }) {
         <span className="row-card__title">{props.title}</span>
         <span className="row-card__meta">{props.meta}</span>
       </span>
-      <ChevronRight size={16} strokeWidth={2.2} className="row-card__chevron" />
-    </button>
-  );
-}
-
-function AvatarCard(props: {
-  name: string;
-  caption: string;
-  value: string;
-  tint: "cyan" | "violet" | "pink";
-}) {
-  return (
-    <SurfaceCard className="avatar-card">
-      <div className={cn("mini-avatar", `mini-avatar--${props.tint}`)}>{props.name[0]}</div>
-      <div className="avatar-card__copy">
-        <p>{props.name}</p>
-        <span>{props.caption}</span>
-      </div>
-      <span className="avatar-card__value">{props.value}</span>
-    </SurfaceCard>
+    </div>
   );
 }
 
@@ -575,27 +620,30 @@ function WorkoutCard(props: {
   name: string;
   meta: string;
   chips: string[];
+  footer?: React.ReactNode;
 }) {
   const Icon = props.icon;
 
   return (
-    <button type="button" className="workout-card">
-      <span className="workout-card__icon">
-        <Icon size={16} strokeWidth={2.2} />
-      </span>
-      <span className="workout-card__copy">
-        <span className="row-card__title">{props.name}</span>
-        <span className="row-card__meta">{props.meta}</span>
-        <span className="chip-row">
-          {props.chips.map((chip) => (
-            <span key={chip} className="chip">
-              {chip}
-            </span>
-          ))}
+    <div className="workout-card">
+      <div className="workout-card__main">
+        <span className="workout-card__icon">
+          <Icon size={16} strokeWidth={2.2} />
         </span>
-      </span>
-      <ChevronRight size={16} strokeWidth={2.2} className="row-card__chevron" />
-    </button>
+        <span className="workout-card__copy">
+          <span className="row-card__title">{props.name}</span>
+          <span className="row-card__meta">{props.meta}</span>
+          <span className="chip-row">
+            {props.chips.map((chip) => (
+              <span key={chip} className="chip">
+                {chip}
+              </span>
+            ))}
+          </span>
+        </span>
+      </div>
+      {props.footer ? <div className="workout-card__footer">{props.footer}</div> : null}
+    </div>
   );
 }
 

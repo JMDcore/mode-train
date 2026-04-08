@@ -54,7 +54,7 @@ function SubmitButton(props: {
       disabled={pending}
     >
       <Sparkles size={16} strokeWidth={2.3} />
-      {pending ? "Building..." : "Build week"}
+      {pending ? "Creando..." : "Crear semana"}
     </button>
   );
 }

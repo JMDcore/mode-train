@@ -1,11 +1,11 @@
 const weekdayMap = {
-  monday: { shortLabel: "Mon", fullLabel: "Monday", order: 0 },
-  tuesday: { shortLabel: "Tue", fullLabel: "Tuesday", order: 1 },
-  wednesday: { shortLabel: "Wed", fullLabel: "Wednesday", order: 2 },
-  thursday: { shortLabel: "Thu", fullLabel: "Thursday", order: 3 },
-  friday: { shortLabel: "Fri", fullLabel: "Friday", order: 4 },
-  saturday: { shortLabel: "Sat", fullLabel: "Saturday", order: 5 },
-  sunday: { shortLabel: "Sun", fullLabel: "Sunday", order: 6 },
+  monday: { shortLabel: "Lun", fullLabel: "Lunes", order: 0 },
+  tuesday: { shortLabel: "Mar", fullLabel: "Martes", order: 1 },
+  wednesday: { shortLabel: "Mie", fullLabel: "Miercoles", order: 2 },
+  thursday: { shortLabel: "Jue", fullLabel: "Jueves", order: 3 },
+  friday: { shortLabel: "Vie", fullLabel: "Viernes", order: 4 },
+  saturday: { shortLabel: "Sab", fullLabel: "Sabado", order: 5 },
+  sunday: { shortLabel: "Dom", fullLabel: "Domingo", order: 6 },
 } as const;
 
 export type WeekdayKey = keyof typeof weekdayMap;
