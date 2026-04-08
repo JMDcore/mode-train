@@ -539,97 +539,90 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
   const primaryRoutine = props.snapshot.routines[0];
   const routineCount = `${props.snapshot.routines.length}`;
   const planCount = `${props.snapshot.weeklyPlan.length}`;
+  const featuredProgramsWithAction = featuredPrograms.map((program, index) => ({
+    ...program,
+    actionLabel: index === 0 ? "Continuar" : "Abrir",
+  }));
 
   return (
     <>
-      <SurfaceCard tone="accent" className="train-canvas">
-        <div className="train-canvas__head">
-          <p className="analytics-board__eyebrow">Programas</p>
-          <span className="meta-pill">{routineCount}</span>
+      <SurfaceCard tone="accent" className="train-stage">
+        <div className="train-stage__head">
+          <div>
+            <p className="analytics-board__eyebrow">Programas</p>
+            <h2 className="train-stage__title">Tus bloques</h2>
+          </div>
+          <span className="panel-count-orb">{routineCount}</span>
         </div>
 
-        <div className="train-canvas__tabs">
-          <button type="button" className="train-canvas__tab train-canvas__tab--active">Mios</button>
-          <button type="button" className="train-canvas__tab">Base</button>
-          <button type="button" className="train-canvas__tab">Drafts</button>
+        <div className="train-stage__toggle-stack">
+          <div className="train-canvas__tabs">
+            <button type="button" className="train-canvas__tab train-canvas__tab--active">Mios</button>
+            <button type="button" className="train-canvas__tab">Base</button>
+            <button type="button" className="train-canvas__tab">Drafts</button>
+          </div>
+
+          <div className="train-canvas__switch">
+            <button type="button" className="train-canvas__switch-item train-canvas__switch-item--active">Casa</button>
+            <button type="button" className="train-canvas__switch-item">Gym</button>
+          </div>
         </div>
 
-        <div className="train-canvas__switch">
-          <button type="button" className="train-canvas__switch-item train-canvas__switch-item--active">Casa</button>
-          <button type="button" className="train-canvas__switch-item">Gym</button>
-        </div>
-
-        <div className="program-showcase-grid">
-          {featuredPrograms.map((program, index) => (
+        <div className="train-stage__deck">
+          {featuredProgramsWithAction.map((program) => (
             <ProgramShowcaseCard
               key={program.id}
               program={program}
-              actionLabel={index === 0 ? "Continuar" : "Abrir"}
+              actionLabel={program.actionLabel}
             />
           ))}
         </div>
 
-        <div className="train-canvas__footer">
+        <div className="train-stage__primary">
           <div>
-            <p className="analytics-board__kicker">Bloque principal</p>
-            <h3 className="analytics-board__status-title">
+            <p className="program-showcase-card__eyebrow">Bloque principal</p>
+            <h3 className="train-stage__primary-title">
               {props.snapshot.activeWorkoutSummary?.routineName ??
                 primaryRoutine?.name ??
                 "Prepara tu semana"}
             </h3>
           </div>
 
-          {props.snapshot.activeWorkoutSummary ? (
-            <Link
-              href={`/app/workouts/${props.snapshot.activeWorkoutSummary.sessionId}`}
-              className="primary-button"
-            >
-              <Play size={16} strokeWidth={2.3} />
-              Reanudar
-            </Link>
-          ) : props.snapshot.canGenerateStarterWeek ? (
-            <StarterWeekButton className="primary-button" />
-          ) : (
-            <div className="meta-pill">
-              <CalendarDays size={13} strokeWidth={2.2} />
-              {planCount} dias
-            </div>
-          )}
+          <span className="train-stage__calendar-pill">
+            <CalendarDays size={14} strokeWidth={2.2} />
+            {props.snapshot.activeWorkoutSummary ? "En marcha" : `${planCount} dias`}
+          </span>
         </div>
       </SurfaceCard>
 
-      <SurfaceCard className="module-panel">
-        <div className="section-panel-head">
+      <SurfaceCard className="studio-panel">
+        <div className="studio-panel__head">
           <div className="section-head__title">
             <span className="section-head__icon">
               <Dumbbell size={15} strokeWidth={2.2} />
             </span>
             <span>Rutinas</span>
           </div>
-          <span className="meta-pill">{props.snapshot.routines.length}</span>
+          <span className="panel-count-orb panel-count-orb--muted">{props.snapshot.routines.length}</span>
         </div>
 
-        <QuickRoutineForm />
-        <div className="list-stack">
+        <div className="studio-panel__composer">
+          <QuickRoutineForm />
+        </div>
+
+        <div className="studio-panel__list">
           {props.snapshot.routines.length > 0 ? (
             props.snapshot.routines.map((routine) => (
-              <WorkoutCard
+              <RoutineStudioCard
                 key={routine.id}
-                icon={Dumbbell}
-                name={routine.name}
-                meta={`${routine.itemCount} ejercicios`}
-                chips={routine.itemCount > 0 ? ["Lista"] : ["Vacia"]}
-                footer={
-                  <RoutineCardFooter
-                    activeWorkoutSummary={props.snapshot.activeWorkoutSummary}
-                    itemCount={routine.itemCount}
-                    routineId={routine.id}
-                  />
-                }
+                activeWorkoutSummary={props.snapshot.activeWorkoutSummary}
+                itemCount={routine.itemCount}
+                routineId={routine.id}
+                title={routine.name}
               />
             ))
           ) : (
-            <EmptyCard
+            <PanelEmptyCard
               title="Aun no tienes rutinas"
               body="Crea una y dejala lista para entrenar."
             />
@@ -637,8 +630,8 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
         </div>
       </SurfaceCard>
 
-      <SurfaceCard className="module-panel">
-        <div className="section-panel-head">
+      <SurfaceCard className="train-subpanel">
+        <div className="studio-panel__head">
           <div className="section-head__title">
             <span className="section-head__icon">
               <CalendarDays size={15} strokeWidth={2.2} />
@@ -649,10 +642,11 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
             {props.snapshot.weeklyPlan.length > 0 ? `${props.snapshot.weeklyPlan.length} dias` : "Sin plan"}
           </span>
         </div>
-        <div className="list-stack">
+
+        <div className="train-mini-list">
           {props.snapshot.weeklyPlan.length > 0 ? (
             props.snapshot.weeklyPlan.map((entry) => (
-              <RowCard
+              <TrainMiniRow
                 key={entry.id}
                 icon={entry.kind === "run" ? Footprints : CalendarDays}
                 title={entry.dayLabel}
@@ -660,7 +654,7 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
               />
             ))
           ) : (
-            <EmptyCard
+            <PanelEmptyCard
               title="Sin plan semanal"
               body="La semana inicial te deja la base lista en un toque."
             />
@@ -668,8 +662,8 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
         </div>
       </SurfaceCard>
 
-      <SurfaceCard className="module-panel module-panel--quiet">
-        <div className="section-panel-head">
+      <SurfaceCard className="train-subpanel train-subpanel--quiet">
+        <div className="studio-panel__head">
           <div className="section-head__title">
             <span className="section-head__icon">
               <Footprints size={15} strokeWidth={2.2} />
@@ -681,8 +675,8 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
         <QuickRunForm />
       </SurfaceCard>
 
-      <SurfaceCard className="module-panel">
-        <div className="section-panel-head">
+      <SurfaceCard className="train-subpanel">
+        <div className="studio-panel__head">
           <div className="section-head__title">
             <span className="section-head__icon">
               <Route size={15} strokeWidth={2.2} />
@@ -691,9 +685,10 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
           </div>
           <span className="summary-panel__meta">{props.snapshot.library.length} ejercicios</span>
         </div>
-        <div className="list-stack">
+
+        <div className="train-mini-list">
           {props.snapshot.library.slice(0, 5).map((exercise) => (
-            <RowCard
+            <TrainMiniRow
               key={exercise.id}
               icon={exercise.primaryMuscleGroup === "Cardio" ? Footprints : Activity}
               title={exercise.name}
@@ -703,6 +698,85 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
         </div>
       </SurfaceCard>
     </>
+  );
+}
+
+function RoutineStudioCard(props: {
+  routineId: string;
+  title: string;
+  itemCount: number;
+  activeWorkoutSummary: AppSnapshot["activeWorkoutSummary"];
+}) {
+  const hasActiveWorkout = Boolean(props.activeWorkoutSummary);
+  const isCurrentRoutineActive = props.activeWorkoutSummary?.routineId === props.routineId;
+
+  return (
+    <article className="routine-studio-card">
+      <div className="routine-studio-card__head">
+        <span className="routine-studio-card__icon">
+          <Dumbbell size={16} strokeWidth={2.2} />
+        </span>
+
+        <div className="routine-studio-card__copy">
+          <h3>{props.title}</h3>
+          <p>{props.itemCount} ejercicios</p>
+        </div>
+
+        <span className={cn("routine-studio-card__chip", props.itemCount === 0 && "routine-studio-card__chip--muted")}>
+          {props.itemCount > 0 ? "Lista" : "Vacia"}
+        </span>
+      </div>
+
+      <div className="routine-studio-card__footer">
+        <Link href={`/app/routines/${props.routineId}`} className="routine-studio-card__secondary">
+          <PencilLine size={15} strokeWidth={2.3} />
+          {props.itemCount > 0 ? "Editar" : "Completar"}
+        </Link>
+
+        {props.itemCount === 0 ? null : hasActiveWorkout && !isCurrentRoutineActive ? (
+          <Link
+            href={`/app/workouts/${props.activeWorkoutSummary!.sessionId}`}
+            className="routine-studio-card__primary"
+          >
+            <Play size={15} strokeWidth={2.3} />
+            Ver activa
+          </Link>
+        ) : (
+          <StartWorkoutButton
+            className="routine-studio-card__primary"
+            compact
+            routineTemplateId={props.routineId}
+            label={isCurrentRoutineActive ? "Reanudar" : "Iniciar"}
+            resume={isCurrentRoutineActive}
+          />
+        )}
+      </div>
+    </article>
+  );
+}
+
+function TrainMiniRow(props: { icon: LucideIcon; title: string; meta: string }) {
+  const Icon = props.icon;
+
+  return (
+    <article className="train-mini-row">
+      <span className="train-mini-row__icon">
+        <Icon size={15} strokeWidth={2.2} />
+      </span>
+      <div className="train-mini-row__copy">
+        <strong>{props.title}</strong>
+        <span>{props.meta}</span>
+      </div>
+    </article>
+  );
+}
+
+function PanelEmptyCard(props: { title: string; body: string }) {
+  return (
+    <article className="panel-empty-card">
+      <strong>{props.title}</strong>
+      <p>{props.body}</p>
+    </article>
   );
 }
 
@@ -1001,38 +1075,6 @@ function RowCard(props: { icon: LucideIcon; title: string; meta: string }) {
   );
 }
 
-function WorkoutCard(props: {
-  icon: LucideIcon;
-  name: string;
-  meta: string;
-  chips: string[];
-  footer?: React.ReactNode;
-}) {
-  const Icon = props.icon;
-
-  return (
-    <div className="workout-card">
-      <div className="workout-card__main">
-        <span className="workout-card__icon">
-          <Icon size={16} strokeWidth={2.2} />
-        </span>
-        <span className="workout-card__copy">
-          <span className="row-card__title">{props.name}</span>
-          <span className="row-card__meta">{props.meta}</span>
-          <span className="chip-row">
-            {props.chips.map((chip) => (
-              <span key={chip} className="chip">
-                {chip}
-              </span>
-            ))}
-          </span>
-        </span>
-      </div>
-      {props.footer ? <div className="workout-card__footer">{props.footer}</div> : null}
-    </div>
-  );
-}
-
 function InsightLinkCard(props: {
   href: string;
   icon: LucideIcon;
@@ -1087,41 +1129,6 @@ function ActiveWorkoutCard(props: {
         Reanudar
       </Link>
     </SurfaceCard>
-  );
-}
-
-function RoutineCardFooter(props: {
-  routineId: string;
-  itemCount: number;
-  activeWorkoutSummary: AppSnapshot["activeWorkoutSummary"];
-}) {
-  const hasActiveWorkout = Boolean(props.activeWorkoutSummary);
-  const isCurrentRoutineActive = props.activeWorkoutSummary?.routineId === props.routineId;
-
-  return (
-    <div className="workout-card__actions">
-      <Link href={`/app/routines/${props.routineId}`} className="ghost-button">
-        <PencilLine size={15} strokeWidth={2.3} />
-        {props.itemCount > 0 ? "Editar" : "Completar"}
-      </Link>
-
-      {props.itemCount === 0 ? null : hasActiveWorkout && !isCurrentRoutineActive ? (
-        <Link
-          href={`/app/workouts/${props.activeWorkoutSummary!.sessionId}`}
-          className="secondary-button"
-        >
-          <Play size={15} strokeWidth={2.3} />
-          Ver activa
-        </Link>
-      ) : (
-        <StartWorkoutButton
-          compact
-          routineTemplateId={props.routineId}
-          label={isCurrentRoutineActive ? "Reanudar" : "Iniciar"}
-          resume={isCurrentRoutineActive}
-        />
-      )}
-    </div>
   );
 }
 
