@@ -1,6 +1,7 @@
 "use client";
 
-import { Target, TrendingUp, UserRound } from "lucide-react";
+import { Activity, CalendarDays, Target, TrendingUp, UserRound } from "lucide-react";
+import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -27,28 +28,70 @@ export function OnboardingCard(props: { profile: UserProfile }) {
 
   return (
     <div className="auth-card">
+      <span className="auth-card__glow auth-card__glow--violet" aria-hidden="true" />
+      <span className="auth-card__glow auth-card__glow--lime" aria-hidden="true" />
+
       <div className="auth-card__hero">
-        <div className="auth-card__brand">
-          <div className="auth-card__mark">MT</div>
-          <div>
-            <p className="auth-card__eyebrow">Perfil inicial</p>
-            <h1 className="auth-card__title">Ajusta tu base</h1>
+        <div className="auth-card__topline">
+          <div className="auth-card__brand">
+            <div className="auth-card__mark">MT</div>
+            <p className="auth-card__eyebrow">Mode Train</p>
           </div>
+          <span className="auth-card__capsule">Perfil inicial</span>
         </div>
 
-        <p className="auth-card__subtitle">
-          Muy pocos datos, mucha mas precision. Con esto te dejamos la app lista para
-          darte contexto de verdad.
-        </p>
+        <div className="auth-card__showcase auth-card__showcase--setup">
+          <div className="auth-card__art" aria-hidden="true">
+            <Image
+              src="/media/anatomy-mannequin.svg"
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 28rem"
+              className="auth-card__art-image"
+            />
+          </div>
+          <div className="auth-card__showcase-veil" aria-hidden="true" />
 
-        <div className="auth-card__chips">
-          <span className="auth-chip">Perfil</span>
-          <span className="auth-chip">Semana inicial</span>
-          <span className="auth-chip">Progreso util</span>
+          <div className="auth-card__copy">
+            <p className="auth-card__mode">Base personal</p>
+            <h1 className="auth-card__title">Ajusta tu perfil</h1>
+            <p className="auth-card__subtitle">
+              Muy pocos datos, mucha mas precision. Con esto dejamos lista tu agenda,
+              tus plantillas y el resumen real de progreso.
+            </p>
+          </div>
+
+          <div className="auth-card__chips">
+            <span className="auth-chip">Rutinas</span>
+            <span className="auth-chip">Agenda</span>
+            <span className="auth-chip">Resumen</span>
+          </div>
+
+          <div className="auth-card__stats">
+            <div className="auth-card__stat">
+              <span className="auth-card__stat-icon">
+                <Target size={15} strokeWidth={2.2} />
+              </span>
+              <div>
+                <small>Objetivo</small>
+                <strong>{props.profile.goal || "Base"}</strong>
+              </div>
+            </div>
+
+            <div className="auth-card__stat">
+              <span className="auth-card__stat-icon">
+                <CalendarDays size={15} strokeWidth={2.2} />
+              </span>
+              <div>
+                <small>Sesiones</small>
+                <strong>{props.profile.preferredWeeklySessions ?? "4"} / semana</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <form action={formAction} className="auth-form">
+      <form action={formAction} className="auth-form auth-form--card auth-form--setup">
         <div className="auth-section">
           <div className="auth-section__head">
             <p className="auth-section__kicker">Identidad</p>
@@ -70,29 +113,26 @@ export function OnboardingCard(props: { profile: UserProfile }) {
             <h2 className="auth-section__title">Lo que quieres mejorar</h2>
           </div>
 
-          <SelectField
-            icon={Target}
+          <ChoiceField
             label="Objetivo"
             name="goal"
             options={goalOptions}
             defaultValue={props.profile.goal}
           />
 
-          <div className="auth-grid">
-            <SelectField
-              icon={TrendingUp}
-              label="Nivel"
-              name="experienceLevel"
-              options={levelOptions}
-              defaultValue={props.profile.experienceLevel}
-            />
-            <NumberField
-              label="Sesiones / semana"
-              name="preferredWeeklySessions"
-              placeholder="4"
-              defaultValue={props.profile.preferredWeeklySessions ?? ""}
-            />
-          </div>
+          <ChoiceField
+            label="Nivel"
+            name="experienceLevel"
+            options={levelOptions}
+            defaultValue={props.profile.experienceLevel}
+          />
+
+          <NumberField
+            label="Sesiones / semana"
+            name="preferredWeeklySessions"
+            placeholder="4"
+            defaultValue={props.profile.preferredWeeklySessions ?? ""}
+          />
         </div>
 
         <div className="auth-section">
@@ -154,34 +194,38 @@ function Field(props: {
   );
 }
 
-function SelectField(props: {
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
+function ChoiceField(props: {
   label: string;
   name: string;
   options: string[];
   defaultValue?: string;
+  compact?: boolean;
 }) {
-  const Icon = props.icon;
-
   return (
-    <label className="auth-field">
-      <span className="auth-field__label">{props.label}</span>
-      <span className="auth-field__control">
-        <span className="auth-field__icon">
-          <Icon size={16} strokeWidth={2.2} />
-        </span>
-        <select name={props.name} defaultValue={props.defaultValue || ""} required>
-          <option value="" disabled>
-            Selecciona una opcion
-          </option>
-          {props.options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </span>
-    </label>
+    <fieldset className="auth-choice-group">
+      <legend className="auth-field__label">{props.label}</legend>
+      <div
+        className={`auth-choice-group__grid${props.compact ? " auth-choice-group__grid--compact" : ""}`}
+      >
+        {props.options.map((option, index) => {
+          const id = `${props.name}-${index}`;
+
+          return (
+            <label key={option} htmlFor={id} className="auth-choice-pill">
+              <input
+                id={id}
+                type="radio"
+                name={props.name}
+                value={option}
+                defaultChecked={(props.defaultValue || "") === option}
+                required
+              />
+              <span>{option}</span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 
@@ -192,10 +236,15 @@ function NumberField(props: {
   defaultValue?: string | number;
   step?: string;
 }) {
+  const Icon = props.name === "preferredWeeklySessions" ? Activity : TrendingUp;
+
   return (
     <label className="auth-field">
       <span className="auth-field__label">{props.label}</span>
       <span className="auth-field__control">
+        <span className="auth-field__icon">
+          <Icon size={16} strokeWidth={2.2} />
+        </span>
         <input
           type="number"
           name={props.name}

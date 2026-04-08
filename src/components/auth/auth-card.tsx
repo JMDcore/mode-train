@@ -1,6 +1,7 @@
 "use client";
 
-import { LockKeyhole, Mail, UserRound } from "lucide-react";
+import { Activity, CalendarDays, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -30,30 +31,77 @@ export function AuthCard(props: AuthCardProps) {
   const highlights = isRegister
     ? ["Privada", "Lista en minutos"]
     : ["Tu espacio", "Lista para entrenar"];
+  const stats = isRegister
+    ? [
+        { icon: ShieldCheck, label: "Base", value: "Privada" },
+        { icon: CalendarDays, label: "Agenda", value: "Clara" },
+      ]
+    : [
+        { icon: Activity, label: "Resumen", value: "Vivo" },
+        { icon: CalendarDays, label: "Agenda", value: "Hoy" },
+      ];
 
   return (
     <div className="auth-card">
+      <span className="auth-card__glow auth-card__glow--violet" aria-hidden="true" />
+      <span className="auth-card__glow auth-card__glow--lime" aria-hidden="true" />
+
       <div className="auth-card__hero">
-        <div className="auth-card__brand">
-          <div className="auth-card__mark">MT</div>
-          <div>
-            <p className="auth-card__eyebrow">{props.eyebrow ?? "Mode Train"}</p>
-            <h1 className="auth-card__title">{props.title}</h1>
+        <div className="auth-card__topline">
+          <div className="auth-card__brand">
+            <div className="auth-card__mark">MT</div>
+            <p className="auth-card__eyebrow">Mode Train</p>
           </div>
+          <span className="auth-card__capsule">{props.eyebrow ?? "Mode Train"}</span>
         </div>
 
-        <p className="auth-card__subtitle">{props.subtitle}</p>
+        <div className="auth-card__showcase">
+          <div className="auth-card__art" aria-hidden="true">
+            <Image
+              src="/media/anatomy-mannequin.svg"
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 28rem"
+              className="auth-card__art-image"
+            />
+          </div>
+          <div className="auth-card__showcase-veil" aria-hidden="true" />
 
-        <div className="auth-card__chips">
-          {highlights.map((item) => (
-            <span key={item} className="auth-chip">
-              {item}
-            </span>
-          ))}
+          <div className="auth-card__copy">
+            <p className="auth-card__mode">{isRegister ? "Acceso privado" : "Modo listo"}</p>
+            <h1 className="auth-card__title">{props.title}</h1>
+            <p className="auth-card__subtitle">{props.subtitle}</p>
+          </div>
+
+          <div className="auth-card__chips">
+            {highlights.map((item) => (
+              <span key={item} className="auth-chip">
+                {item}
+              </span>
+            ))}
+          </div>
+
+          <div className="auth-card__stats">
+            {stats.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div key={item.label} className="auth-card__stat">
+                  <span className="auth-card__stat-icon">
+                    <Icon size={15} strokeWidth={2.2} />
+                  </span>
+                  <div>
+                    <small>{item.label}</small>
+                    <strong>{item.value}</strong>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <form action={formAction} className="auth-form">
+      <form action={formAction} className="auth-form auth-form--card">
         {isRegister ? (
           <Field icon={UserRound} label="Nombre" name="displayName" placeholder="Jose Miguel" />
         ) : null}

@@ -2,15 +2,14 @@
 
 import {
   ArrowLeft,
-  Dumbbell,
   PencilLine,
   Plus,
-  Sparkles,
 } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { StartWorkoutButton } from "@/components/training/start-workout-button";
 import {
@@ -49,6 +48,11 @@ function formatScheduledDate(value: string | null) {
 export function RoutinesHub(props: {
   data: RoutinesHubData;
 }) {
+  const [activeView, setActiveView] = useState<"routines" | "pool">("routines");
+  const featuredRoutine = props.data.routines[0] ?? null;
+  const visibleExercises = props.data.availableExercises.slice(0, 12);
+  const totalPool = props.data.librarySummary.systemCount + props.data.librarySummary.customCount;
+
   return (
     <main className="detail-page routines-page">
       <div className="detail-shell routines-shell">
@@ -63,92 +67,190 @@ export function RoutinesHub(props: {
           initial={{ opacity: 0, y: 20, scale: 0.985 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="detail-hero routines-hero"
+          className="detail-hero routines-hero routines-hero--visual"
         >
-          <div className="detail-hero__copy">
-            <p className="detail-kicker">Rutinas</p>
-            <h1>Plantillas para entrenar sin friccion</h1>
-            <p>Crea tus bloques, combina ejercicios del pool y guarda tus propios movimientos.</p>
+          <div className="routines-hero__art" aria-hidden="true">
+            <Image
+              src="/media/anatomy-mannequin.svg"
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 30rem"
+              className="routines-hero__image"
+            />
           </div>
+          <div className="routines-hero__veil" aria-hidden="true" />
 
-          <div className="detail-hero__stats">
-            <div className="detail-stat">
-              <span>Rutinas</span>
-              <strong>{props.data.routines.length}</strong>
+          <div className="routines-hero__content">
+            <div className="routines-hero__top">
+              <span className="mt-chip mt-chip--violet">
+                {featuredRoutine ? "Rutina foco" : "Pool abierto"}
+              </span>
+              <span className="mt-chip mt-chip--lime">
+                {featuredRoutine ? `${featuredRoutine.itemCount} ejercicios` : `${totalPool} ejercicios`}
+              </span>
             </div>
-            <div className="detail-stat">
-              <span>Pool</span>
-              <strong>
-                {props.data.librarySummary.systemCount + props.data.librarySummary.customCount}
-              </strong>
+
+            <div className="routines-hero__copy">
+              <p className="detail-kicker">Rutinas y ejercicios</p>
+              <h1>{featuredRoutine ? featuredRoutine.name : "Tu base de entrenamiento"}</h1>
+              <p>
+                {featuredRoutine
+                  ? featuredRoutine.notes ||
+                    `Plantilla lista para entrenar y mover por la agenda cuando la necesites.`
+                  : "Crea plantillas limpias, combina tu pool y deja listo cada entreno sin ruido."}
+              </p>
+            </div>
+
+            <div className="routines-hero__footer">
+              {featuredRoutine ? (
+                <StartWorkoutButton
+                  routineTemplateId={featuredRoutine.id}
+                  label="Entrenar"
+                  className="routine-hero-button"
+                />
+              ) : (
+                <a href="#routine-create" className="routine-hero-button routine-hero-button--ghost">
+                  Crear rutina
+                </a>
+              )}
+
+              <div className="routines-hero__badge">
+                <strong>{featuredRoutine ? formatScheduledDate(featuredRoutine.latestScheduledDate) : "Pool"}</strong>
+                <span>
+                  {featuredRoutine
+                    ? `${featuredRoutine.itemCount} bloques`
+                    : `${props.data.librarySummary.customCount} propios`}
+                </span>
+              </div>
             </div>
           </div>
         </motion.section>
 
-        <section className="detail-section">
-          <div className="detail-section__head">
-            <span>
-              <Sparkles size={16} strokeWidth={2.2} />
-              Crear
-            </span>
+        <section className="routine-studio">
+          <div className="routine-studio__switch">
+            <button
+              type="button"
+              className={`routine-studio__switch-item${activeView === "routines" ? " routine-studio__switch-item--active" : ""}`}
+              onClick={() => setActiveView("routines")}
+            >
+              Rutinas
+            </button>
+            <button
+              type="button"
+              className={`routine-studio__switch-item${activeView === "pool" ? " routine-studio__switch-item--active" : ""}`}
+              onClick={() => setActiveView("pool")}
+            >
+              Pool
+            </button>
           </div>
 
-          <div className="detail-stack">
-            <CreateRoutineCard />
-            <CreateExerciseCard />
-          </div>
-        </section>
+          {activeView === "routines" ? (
+            <div className="detail-stack">
+              <CreateRoutineCard />
 
-        <section className="detail-section">
-          <div className="detail-section__head">
-            <span>
-              <Dumbbell size={16} strokeWidth={2.2} />
-              Tus rutinas
-            </span>
-            <span>{props.data.routines.length}</span>
-          </div>
-
-          <div className="detail-stack">
-            {props.data.routines.length > 0 ? (
-              props.data.routines.map((routine) => (
-                <article key={routine.id} className="routine-hub-card">
-                  <div className="routine-hub-card__copy">
-                    <div>
-                      <p className="detail-kicker">Rutina guardada</p>
-                      <h2>{routine.name}</h2>
-                    </div>
-                    <div className="routine-hub-card__meta">
-                      <span>{routine.itemCount} ejercicios</span>
-                      <span>{formatScheduledDate(routine.latestScheduledDate)}</span>
-                    </div>
-                    {routine.notes ? <p>{routine.notes}</p> : null}
-                  </div>
-
-                  <div className="routine-hub-card__actions">
-                    <StartWorkoutButton
-                      routineTemplateId={routine.id}
-                      label="Entrenar"
-                      className="primary-button"
+              {props.data.routines.length > 0 ? (
+                <div className="routine-gallery">
+                  {props.data.routines.map((routine, index) => (
+                    <RoutineStudioCard
+                      key={routine.id}
+                      routine={routine}
+                      emphasized={index === 0}
                     />
-                    <Link href={`/app/routines/${routine.id}`} className="secondary-button">
-                      <PencilLine size={16} strokeWidth={2.3} />
-                      Editar
-                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="detail-empty">
+                  <p className="detail-empty__title">Todavia no tienes rutinas</p>
+                  <p className="detail-empty__body">
+                    Empieza creando un bloque para pecho, espalda, pierna o el split que mas uses.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="detail-stack">
+              <CreateExerciseCard />
+
+              <section className="detail-card detail-card--surface routine-pool-card">
+                <div className="detail-card__head">
+                  <div>
+                    <p className="detail-kicker">Pool total</p>
+                    <h2>{totalPool} ejercicios</h2>
                   </div>
-                </article>
-              ))
-            ) : (
-              <div className="detail-empty">
-                <p className="detail-empty__title">Todavia no tienes rutinas</p>
-                <p className="detail-empty__body">
-                  Empieza creando un bloque para pecho, espalda, pierna o el split que mas uses.
-                </p>
-              </div>
-            )}
-          </div>
+                  <div className="routine-pool-card__stats">
+                    <span>Sistema {props.data.librarySummary.systemCount}</span>
+                    <span>Propios {props.data.librarySummary.customCount}</span>
+                  </div>
+                </div>
+
+                <div className="routine-pool-grid">
+                  {visibleExercises.map((exercise) => (
+                    <article key={exercise.id} className="routine-pool-item">
+                      <div>
+                        <strong>{exercise.name}</strong>
+                        <span>{exercise.primaryMuscleGroup}</span>
+                      </div>
+                      <em>{exercise.equipment}</em>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
         </section>
       </div>
     </main>
+  );
+}
+
+function RoutineStudioCard(props: {
+  routine: RoutinesHubData["routines"][number];
+  emphasized: boolean;
+}) {
+  const helper =
+    props.routine.notes ||
+    `Agendada ${formatScheduledDate(props.routine.latestScheduledDate)} · lista para registrar sets.`;
+
+  return (
+    <article
+      className={`routine-studio-card${props.emphasized ? " routine-studio-card--emphasized" : ""}`}
+    >
+      <div className="routine-studio-card__art" aria-hidden="true">
+        <Image
+          src="/media/anatomy-mannequin.svg"
+          alt=""
+          fill
+          sizes="(max-width: 768px) 100vw, 30rem"
+          className="routine-studio-card__image"
+        />
+      </div>
+      <div className="routine-studio-card__veil" aria-hidden="true" />
+
+      <div className="routine-studio-card__body">
+        <div className="routine-studio-card__top">
+          <span className="mt-chip mt-chip--violet">Plantilla</span>
+          <span className="mt-chip mt-chip--lime">{props.routine.itemCount} ejercicios</span>
+        </div>
+
+        <div className="routine-studio-card__copy">
+          <p className="detail-kicker">Rutina guardada</p>
+          <h2>{props.routine.name}</h2>
+          <p>{helper}</p>
+        </div>
+
+        <div className="routine-studio-card__footer">
+          <StartWorkoutButton
+            routineTemplateId={props.routine.id}
+            label="Entrenar"
+            className="routine-studio-card__primary"
+          />
+          <Link href={`/app/routines/${props.routine.id}`} className="routine-studio-card__secondary">
+            <PencilLine size={16} strokeWidth={2.3} />
+            Editar
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -173,7 +275,7 @@ function CreateRoutineCard() {
   }, [router, state.nextPath, state.success]);
 
   return (
-    <section className="detail-card detail-card--surface">
+    <section id="routine-create" className="detail-card detail-card--surface routine-create-card">
       <div className="detail-card__head">
         <div>
           <p className="detail-kicker">Plantilla</p>
@@ -211,7 +313,7 @@ function CreateExerciseCard() {
   }, [router, state.success]);
 
   return (
-    <section className="detail-card detail-card--surface">
+    <section className="detail-card detail-card--surface routine-create-card routine-create-card--exercise">
       <div className="detail-card__head">
         <div>
           <p className="detail-kicker">Pool propio</p>

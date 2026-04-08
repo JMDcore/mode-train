@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { destroySession } from "@/server/auth/session";
 
-async function handleLogout(request: Request) {
+async function handleLogout() {
   await destroySession();
 
   return new NextResponse(null, {
@@ -13,10 +13,10 @@ async function handleLogout(request: Request) {
   });
 }
 
-export async function GET(request: Request) {
-  return handleLogout(request);
+export async function GET() {
+  return handleLogout();
 }
 
-export async function POST(request: Request) {
-  return handleLogout(request);
+export async function POST() {
+  return handleLogout();
 }
