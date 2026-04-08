@@ -89,7 +89,7 @@ export function WorkoutSession(props: {
         >
           <div className="workout-detail-hero__image">
             <Image
-              src="/media/fitness-model.jpg"
+              src="/media/anatomy-mannequin.svg"
               alt="Workout focus"
               fill
               sizes="(max-width: 768px) 100vw, 40vw"
@@ -100,11 +100,11 @@ export function WorkoutSession(props: {
           <div className="workout-detail-hero__overlay" />
 
           <div className="detail-hero__copy">
-            <p className="detail-kicker">Power</p>
+            <p className="detail-kicker">Bloque</p>
             <h1>
               {props.detail.routineName} <span>{exerciseProgress}/{props.detail.totalExercises}</span>
             </h1>
-            <p>Empezaste el {props.detail.startedAtLabel}. Guarda por bloques y sigue.</p>
+            <p>Entraste el {props.detail.startedAtLabel}. Guarda por bloques y sigue fino.</p>
             <div className="workout-progress-dots" aria-hidden="true">
               {Array.from({ length: props.detail.totalExercises }).map((_, index) => (
                 <span

@@ -17,9 +17,9 @@ import type { ProgressOverview } from "@/server/training/progress";
 
 const analyticsTabs = [
   { key: "general", label: "General" },
-  { key: "body", label: "Body" },
+  { key: "body", label: "Cuerpo" },
   { key: "mode", label: "Mode" },
-  { key: "training", label: "Training" },
+  { key: "training", label: "Entreno" },
 ] as const;
 
 type AnalyticsTab = (typeof analyticsTabs)[number]["key"];
@@ -57,13 +57,13 @@ const fallbackMeasurementMap: Record<
   { exerciseName: string; latestPerformanceLabel: string; bestPerformanceLabel: string; trendLabel: string }
 > = {
   Hombros: {
-    exerciseName: "Shoulders",
+    exerciseName: "Hombros",
     latestPerformanceLabel: "81 cm",
     bestPerformanceLabel: "88 cm",
     trendLabel: "+6 cm",
   },
   Pecho: {
-    exerciseName: "Chest",
+    exerciseName: "Pecho",
     latestPerformanceLabel: "102 cm",
     bestPerformanceLabel: "108 cm",
     trendLabel: "+4 cm",
@@ -72,10 +72,10 @@ const fallbackMeasurementMap: Record<
     exerciseName: "Core",
     latestPerformanceLabel: "Base estable",
     bestPerformanceLabel: "Mejor control",
-    trendLabel: "+ focus",
+    trendLabel: "+ foco",
   },
   Pierna: {
-    exerciseName: "Leg power",
+    exerciseName: "Potencia pierna",
     latestPerformanceLabel: "24 reps",
     bestPerformanceLabel: "30 reps",
     trendLabel: "+6 reps",
@@ -96,10 +96,10 @@ export function ProgressOverviewView(props: {
     const runs = Number(props.overview.summaryMetrics[3]?.value ?? 0);
 
     return [
-      { label: "Power", value: Math.max(18, Math.min(68, Math.round(volume / 120))), tone: "yellow" },
+      { label: "Fuerza", value: Math.max(18, Math.min(68, Math.round(volume / 120))), tone: "yellow" },
       { label: "Cardio", value: Math.max(12, Math.min(26, runs * 6)), tone: "pink" },
-      { label: "Stretching", value: Math.max(10, Math.min(22, Math.round(sets / 8))), tone: "cyan" },
-      { label: "Focus", value: Math.max(8, Math.min(24, sessions * 5)), tone: "violet" },
+      { label: "Movilidad", value: Math.max(10, Math.min(22, Math.round(sets / 8))), tone: "cyan" },
+      { label: "Control", value: Math.max(8, Math.min(24, sessions * 5)), tone: "violet" },
     ];
   }, [props.overview.summaryMetrics]);
 
@@ -230,7 +230,7 @@ export function ProgressOverviewView(props: {
                 </div>
 
                 <div className="analytics-results">
-                  <h3>The best results</h3>
+                  <h3>Mejores resultados</h3>
                   {props.overview.cards.slice(0, 3).map((card) => (
                     <article key={card.exerciseId} className="analytics-result-row">
                       <div className="analytics-result-row__icon">
@@ -270,17 +270,17 @@ export function ProgressOverviewView(props: {
               <section className="analytics-card analytics-card--body">
                 <div className="analytics-card__head analytics-card__head--dense">
                   <div>
-                    <p className="card-kicker">Your weight</p>
+                    <p className="card-kicker">Tu peso</p>
                     <h3>89 kg</h3>
                   </div>
-                  <span className="summary-panel__meta">Muscle groups</span>
+                  <span className="summary-panel__meta">Musculos</span>
                 </div>
 
                 <div className="body-analytics">
                   <div className="body-analytics__figure">
                     <div className="body-analytics__glow" />
                     <Image
-                      src="/media/bodybuilder-program.png"
+                      src="/media/anatomy-mannequin.svg"
                       alt="Body analytics"
                       fill
                       sizes="(max-width: 768px) 100vw, 40vw"
@@ -330,9 +330,9 @@ export function ProgressOverviewView(props: {
                   </div>
 
                   <div className="analytics-comparison">
-                    <span>Past: {selectedBodyCard.latestPerformanceLabel}</span>
+                    <span>Antes: {selectedBodyCard.latestPerformanceLabel}</span>
                     <span className="analytics-comparison__arrow">→</span>
-                    <span>Current: {selectedBodyCard.bestPerformanceLabel}</span>
+                    <span>Actual: {selectedBodyCard.bestPerformanceLabel}</span>
                   </div>
 
                   <MiniLineChart />
@@ -372,16 +372,16 @@ export function ProgressOverviewView(props: {
             <div className="analytics-stack">
               <section className="analytics-card analytics-card--interactive">
                 <div>
-                  <h3>Interactive view</h3>
-                  <p>Modo visual para seguir el bloque, revisar el cuerpo y entrenar con más contexto.</p>
+                  <h3>Vista interactiva</h3>
+                  <p>Lee el bloque, localiza grupos y entra en el entreno con más contexto visual.</p>
                 </div>
                 <div className="analytics-card__interactive">
                   <button type="button" className="primary-button">
-                    Start
+                    Abrir
                   </button>
                   <div className="analytics-card__interactive-image">
                     <Image
-                      src="/media/fitness-model.jpg"
+                      src="/media/anatomy-mannequin.svg"
                       alt="Interactive training"
                       fill
                       sizes="(max-width: 768px) 100vw, 40vw"
@@ -451,7 +451,7 @@ function DonutBreakdown(props: { segments: DonutSegment[] }) {
       </svg>
       <div className="donut-breakdown__center">
         <strong>{props.segments[0]?.value ?? 0}%</strong>
-        <span>Power</span>
+        <span>Fuerza</span>
       </div>
     </div>
   );

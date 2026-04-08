@@ -71,24 +71,24 @@ const weekOrder = [
 const featuredPrograms = [
   {
     id: "upper-power",
-    title: "Brazos fuertes y torso potente",
-    body: "Bloque premium para subir el tren superior sin perder ritmo ni forma.",
+    title: "Torso potente",
+    body: "Pecho, hombro y brazo con lectura clara y fuerza limpia.",
     difficulty: "Intermedio",
     duration: "4 semanas",
     progress: "24 / 36",
-    imageSrc: "/media/bodybuilder-program.png",
-    imagePosition: "center 12%",
+    imageSrc: "/media/anatomy-mannequin.svg",
+    imagePosition: "center 22%",
     accent: "violet" as const,
   },
   {
     id: "shape-mode",
-    title: "Definicion y shape con mas control",
-    body: "Trabajo estético con accesorios, hombro limpio y más presencia visual.",
+    title: "Shape limpio",
+    body: "Torso visual, hombro fino y volumen medio bien controlado.",
     difficulty: "Shape",
     duration: "3 semanas",
     progress: "12 / 18",
-    imageSrc: "/media/fitness-model.jpg",
-    imagePosition: "center top",
+    imageSrc: "/media/anatomy-mannequin.svg",
+    imagePosition: "center 14%",
     accent: "lime" as const,
   },
 ] as const;
@@ -313,12 +313,12 @@ function HomeScreen(props: {
       <SurfaceCard tone="accent" className="analytics-board analytics-board--home">
         <div className="analytics-board__program-status">
           <div>
-            <p className="analytics-board__kicker">Current</p>
+            <p className="analytics-board__kicker">Actual</p>
             <h3 className="analytics-board__status-title">
               {props.snapshot.activeWorkoutSummary
                 ? "1 bloque en marcha"
                 : props.snapshot.routines.length > 0
-                  ? `${props.snapshot.routines.length} active program`
+                  ? `${props.snapshot.routines.length} bloques activos`
                   : "Sin programas"}
             </h3>
           </div>
@@ -334,7 +334,7 @@ function HomeScreen(props: {
               <Zap size={13} strokeWidth={2.2} />
             </span>
             <button type="button" className="program-bubble program-bubble--ghost">
-              Add +
+              Nuevo
             </button>
           </div>
         </div>
@@ -353,7 +353,7 @@ function HomeScreen(props: {
 
         <div className="analytics-board__metrics analytics-board__metrics--hero">
           <OrbitMetric
-            label="Readiness"
+            label="Ritmo"
             value={`${props.snapshot.readiness}`}
             note="Hoy"
             progress={props.snapshot.readiness}
@@ -379,7 +379,9 @@ function HomeScreen(props: {
           <div className="analytics-board__copy">
             <p className="analytics-board__kicker">Programa actual</p>
             <h2 className="analytics-board__headline">{props.snapshot.heroTitle}</h2>
-            <p className="analytics-board__subline">{heroMeta}</p>
+            <p className="analytics-board__subline">
+              {heroMeta || "Activa un bloque limpio y empieza a generar progreso real."}
+            </p>
           </div>
         </div>
 
@@ -496,16 +498,16 @@ function HomeScreen(props: {
       </div>
 
       <div className="insight-pair-grid">
-        <InsightLinkCard
+          <InsightLinkCard
           href="/app/history"
           icon={History}
-          title="Registro"
+          title="Historial"
           body="Todo lo que ya has cerrado."
         />
         <InsightLinkCard
           href="/app/progress"
           icon={TrendingUp}
-          title="Evolucion"
+          title="Progreso"
           body="Tus ejercicios y bloques vivos."
         />
       </div>
@@ -542,25 +544,19 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
     <>
       <SurfaceCard tone="accent" className="train-canvas">
         <div className="train-canvas__head">
-          <p className="analytics-board__eyebrow">Programs</p>
+          <p className="analytics-board__eyebrow">Programas</p>
           <span className="meta-pill">{routineCount}</span>
         </div>
 
         <div className="train-canvas__tabs">
-          <button type="button" className="train-canvas__tab train-canvas__tab--active">
-            My
-          </button>
-          <button type="button" className="train-canvas__tab">Main programs</button>
+          <button type="button" className="train-canvas__tab train-canvas__tab--active">Mios</button>
+          <button type="button" className="train-canvas__tab">Base</button>
           <button type="button" className="train-canvas__tab">Drafts</button>
         </div>
 
         <div className="train-canvas__switch">
-          <button type="button" className="train-canvas__switch-item train-canvas__switch-item--active">
-            En casa
-          </button>
-          <button type="button" className="train-canvas__switch-item">
-            Gym
-          </button>
+          <button type="button" className="train-canvas__switch-item train-canvas__switch-item--active">Casa</button>
+          <button type="button" className="train-canvas__switch-item">Gym</button>
         </div>
 
         <div className="program-showcase-grid">
@@ -611,17 +607,6 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
             <span>Rutinas</span>
           </div>
           <span className="meta-pill">{props.snapshot.routines.length}</span>
-        </div>
-
-        <div className="program-showcase-grid program-showcase-grid--compact">
-          {featuredPrograms.map((program, index) => (
-            <ProgramShowcaseCard
-              key={program.id}
-              program={program}
-              actionLabel={index === 0 ? "Empezar" : "Abrir"}
-              compact
-            />
-          ))}
         </div>
 
         <QuickRoutineForm />
@@ -1060,10 +1045,10 @@ function InsightLinkCard(props: {
     <Link
       href={props.href}
       className="history-entry insight-link-card"
-      aria-label={
-        props.title === "Registro"
+        aria-label={
+        props.title === "Historial"
           ? "Ver registro detallado"
-          : props.title === "Evolucion"
+          : props.title === "Progreso"
             ? "Ver evolucion detallada"
             : props.title
       }
@@ -1197,6 +1182,7 @@ function ProgramShowcaseCard(props: {
         </div>
 
         <div className="program-showcase-card__copy">
+          <span className="program-showcase-card__eyebrow">Bloque curado</span>
           <h3>{props.program.title}</h3>
           <p>{props.program.body}</p>
         </div>
