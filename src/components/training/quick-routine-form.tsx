@@ -10,6 +10,8 @@ import type { RoutineActionState } from "@/server/training/types";
 const initialState: RoutineActionState = {
   error: null,
   success: null,
+  nextPath: null,
+  routineId: null,
 };
 
 export function QuickRoutineForm() {
@@ -23,8 +25,13 @@ export function QuickRoutineForm() {
     }
 
     formRef.current?.reset();
+    if (state.nextPath) {
+      router.push(state.nextPath);
+      return;
+    }
+
     router.refresh();
-  }, [router, state.success]);
+  }, [router, state.nextPath, state.success]);
 
   return (
     <form ref={formRef} action={formAction} className="quick-routine-form">

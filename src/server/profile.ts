@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
 import { buildInitials } from "@/server/auth/user";
 import { getDb } from "@/server/db";
@@ -65,4 +66,18 @@ export function getAuthenticatedRedirectPath(profile: Pick<
   "goal" | "experienceLevel" | "preferredWeeklySessions"
 >) {
   return isProfileComplete(profile) ? "/app" : "/onboarding";
+}
+
+export async function requireCompleteProfile(userId: string) {
+  const profile = await getUserProfile(userId);
+
+  if (!profile) {
+    redirect("/login");
+  }
+
+  if (!isProfileComplete(profile)) {
+    redirect("/onboarding");
+  }
+
+  return profile;
 }

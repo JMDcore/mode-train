@@ -16,10 +16,12 @@ import {
   workoutSessions,
 } from "@/server/db/schema";
 import { compareWeekdayOrder, getWeekdayShortLabel } from "@/server/training/week";
+import { getActiveWorkoutSummary, type ActiveWorkoutSummary } from "@/server/training/workouts";
 
 export type AppSnapshot = {
   readiness: number;
   canGenerateStarterWeek: boolean;
+  activeWorkoutSummary: ActiveWorkoutSummary | null;
   heroChip: string;
   heroTitle: string;
   heroMeta: string[];
@@ -207,6 +209,7 @@ export async function getAppSnapshot(params: {
 }): Promise<AppSnapshot> {
   const db = getDb();
   const { user, profile } = params;
+  const activeWorkoutSummary = await getActiveWorkoutSummary(user.id);
 
   const [routineCountRow] = await db
     .select({ count: count() })
@@ -463,6 +466,7 @@ export async function getAppSnapshot(params: {
   return {
     readiness,
     canGenerateStarterWeek: routineCount === 0 && planCount === 0,
+    activeWorkoutSummary,
     heroChip,
     heroTitle,
     heroMeta,

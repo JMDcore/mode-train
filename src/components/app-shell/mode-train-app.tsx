@@ -11,6 +11,7 @@ import {
   Dumbbell,
   Footprints,
   House,
+  PencilLine,
   Play,
   Plus,
   Route,
@@ -26,7 +27,7 @@ import { useState } from "react";
 
 import { QuickRunForm } from "@/components/training/quick-run-form";
 import { QuickRoutineForm } from "@/components/training/quick-routine-form";
-import { RoutineLogButton } from "@/components/training/routine-log-button";
+import { StartWorkoutButton } from "@/components/training/start-workout-button";
 import { StarterWeekButton } from "@/components/training/starter-week-button";
 import { cn } from "@/lib/utils";
 import type { AuthUser } from "@/server/auth/user";
@@ -124,6 +125,7 @@ export function ModeTrainApp(props: {
   user: AuthUser;
   profile: UserProfile;
   snapshot: AppSnapshot;
+  completionMessage?: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("home");
   const header = headerCopy[activeTab];
@@ -166,6 +168,7 @@ export function ModeTrainApp(props: {
             >
               {activeTab === "home" ? (
                 <HomeScreen
+                  completionMessage={props.completionMessage ?? null}
                   snapshot={props.snapshot}
                   onNavigate={(tab) => setActiveTab(tab)}
                 />
@@ -220,9 +223,26 @@ export function ModeTrainApp(props: {
 function HomeScreen(props: {
   snapshot: AppSnapshot;
   onNavigate: (tab: TabKey) => void;
+  completionMessage: string | null;
 }) {
   return (
     <>
+      {props.completionMessage ? (
+        <SurfaceCard className="status-card">
+          <div className="status-card__icon">
+            <Zap size={16} strokeWidth={2.3} />
+          </div>
+          <div>
+            <p className="row-card__title">{props.completionMessage}</p>
+            <p className="row-card__meta">Tu panel ya refleja la sesion cerrada.</p>
+          </div>
+        </SurfaceCard>
+      ) : null}
+
+      {props.snapshot.activeWorkoutSummary ? (
+        <ActiveWorkoutCard summary={props.snapshot.activeWorkoutSummary} />
+      ) : null}
+
       <SurfaceCard tone="accent" className="hero-card">
         <div className="hero-card__copy">
           <div className="hero-chip">
@@ -239,7 +259,15 @@ function HomeScreen(props: {
 
         <div className="hero-card__aside">
           <ProgressRing value={props.snapshot.readiness} label="Listo" />
-          {props.snapshot.canGenerateStarterWeek ? (
+          {props.snapshot.activeWorkoutSummary ? (
+            <Link
+              href={`/app/workouts/${props.snapshot.activeWorkoutSummary.sessionId}`}
+              className="primary-button"
+            >
+              <Play size={16} strokeWidth={2.4} />
+              Reanudar
+            </Link>
+          ) : props.snapshot.canGenerateStarterWeek ? (
             <StarterWeekButton className="primary-button" />
           ) : (
             <button
@@ -327,7 +355,15 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
             <p className="card-kicker">Plan semanal</p>
             <h2 className="compact-hero__title">{props.snapshot.weeklyPlan[0]?.title ?? "Crea tu primera semana"}</h2>
           </div>
-          {props.snapshot.canGenerateStarterWeek ? (
+          {props.snapshot.activeWorkoutSummary ? (
+            <Link
+              href={`/app/workouts/${props.snapshot.activeWorkoutSummary.sessionId}`}
+              className="pill-soft"
+            >
+              <Play size={14} strokeWidth={2.2} />
+              Reanudar
+            </Link>
+          ) : props.snapshot.canGenerateStarterWeek ? (
             <StarterWeekButton compact />
           ) : (
             <div className="pill-soft">
@@ -337,6 +373,10 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
           )}
         </div>
       </SurfaceCard>
+
+      {props.snapshot.activeWorkoutSummary ? (
+        <ActiveWorkoutCard summary={props.snapshot.activeWorkoutSummary} compact />
+      ) : null}
 
       <ScreenSection icon={CalendarDays} title="Semana">
         <div className="list-stack">
@@ -369,7 +409,13 @@ function TrainScreen(props: { snapshot: AppSnapshot }) {
                 name={routine.name}
                 meta={`${routine.itemCount} ejercicios`}
                 chips={["Rutina", "Lista"]}
-                footer={<RoutineLogButton routineTemplateId={routine.id} />}
+                footer={
+                  <RoutineCardFooter
+                    activeWorkoutSummary={props.snapshot.activeWorkoutSummary}
+                    itemCount={routine.itemCount}
+                    routineId={routine.id}
+                  />
+                }
               />
             ))
           ) : (
@@ -643,6 +689,63 @@ function WorkoutCard(props: {
         </span>
       </div>
       {props.footer ? <div className="workout-card__footer">{props.footer}</div> : null}
+    </div>
+  );
+}
+
+function ActiveWorkoutCard(props: {
+  summary: NonNullable<AppSnapshot["activeWorkoutSummary"]>;
+  compact?: boolean;
+}) {
+  return (
+    <SurfaceCard className={cn("active-workout-card", props.compact && "active-workout-card--compact")}>
+      <div className="active-workout-card__copy">
+        <p className="card-kicker">Sesion en marcha</p>
+        <h3 className="compact-hero__title">{props.summary.routineName}</h3>
+        <p className="row-card__meta">
+          {props.summary.completedExercises}/{props.summary.totalExercises} ejercicios · {props.summary.savedSets} sets
+        </p>
+      </div>
+
+      <Link href={`/app/workouts/${props.summary.sessionId}`} className="secondary-button">
+        <Play size={15} strokeWidth={2.3} />
+        Reanudar
+      </Link>
+    </SurfaceCard>
+  );
+}
+
+function RoutineCardFooter(props: {
+  routineId: string;
+  itemCount: number;
+  activeWorkoutSummary: AppSnapshot["activeWorkoutSummary"];
+}) {
+  const hasActiveWorkout = Boolean(props.activeWorkoutSummary);
+  const isCurrentRoutineActive = props.activeWorkoutSummary?.routineId === props.routineId;
+
+  return (
+    <div className="workout-card__actions">
+      <Link href={`/app/routines/${props.routineId}`} className="ghost-button">
+        <PencilLine size={15} strokeWidth={2.3} />
+        {props.itemCount > 0 ? "Editar" : "Completar"}
+      </Link>
+
+      {props.itemCount === 0 ? null : hasActiveWorkout && !isCurrentRoutineActive ? (
+        <Link
+          href={`/app/workouts/${props.activeWorkoutSummary!.sessionId}`}
+          className="secondary-button"
+        >
+          <Play size={15} strokeWidth={2.3} />
+          Ver activa
+        </Link>
+      ) : (
+        <StartWorkoutButton
+          compact
+          routineTemplateId={props.routineId}
+          label={isCurrentRoutineActive ? "Reanudar" : "Iniciar"}
+          resume={isCurrentRoutineActive}
+        />
+      )}
     </div>
   );
 }

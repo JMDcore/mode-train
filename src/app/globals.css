@@ -1285,6 +1285,423 @@ select {
   color: rgba(201, 255, 231, 0.94);
 }
 
+.primary-button--block,
+.secondary-button,
+.ghost-button {
+  width: 100%;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.ghost-button:disabled,
+.icon-button:disabled,
+.quick-routine-form__submit:disabled,
+.quick-run-form__submit:disabled {
+  opacity: 0.62;
+  cursor: wait;
+}
+
+.secondary-button,
+.ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 1rem;
+  padding: 0.78rem 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondary-button {
+  border: 1px solid rgba(213, 191, 255, 0.2);
+  background: rgba(141, 75, 255, 0.1);
+  color: rgba(241, 234, 255, 0.96);
+}
+
+.ghost-button {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+}
+
+.ghost-button--danger {
+  border-color: rgba(255, 136, 171, 0.18);
+  color: rgba(255, 205, 220, 0.94);
+}
+
+.workout-card__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.active-workout-card,
+.status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.active-workout-card__copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.active-workout-card--compact {
+  padding: 0.9rem 1rem;
+}
+
+.status-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.45rem;
+  width: 2.45rem;
+  border-radius: 999px;
+  background: rgba(141, 75, 255, 0.14);
+  color: rgba(241, 234, 255, 0.96);
+}
+
+.inline-form-feedback,
+.detail-feedback {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+.detail-feedback {
+  border-radius: 1rem;
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.inline-form-feedback--error,
+.detail-feedback--error {
+  color: rgba(255, 205, 220, 0.94);
+  background: rgba(255, 106, 150, 0.08);
+  border: 1px solid rgba(255, 136, 171, 0.14);
+}
+
+.spin-icon {
+  animation: button-spin 0.8s linear infinite;
+}
+
+.detail-page {
+  min-height: 100vh;
+  padding: 1rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
+}
+
+.detail-shell {
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 32rem;
+}
+
+.detail-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.detail-hero,
+.detail-card,
+.editor-item-card,
+.session-card {
+  border: 1px solid var(--line);
+  border-radius: 1.55rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.048), rgba(255, 255, 255, 0.018)),
+    var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.detail-hero {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  background:
+    radial-gradient(circle at top right, rgba(213, 191, 255, 0.14), transparent 28%),
+    linear-gradient(180deg, rgba(24, 16, 40, 0.98), rgba(11, 8, 19, 0.96));
+}
+
+.detail-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.detail-hero__copy h1,
+.detail-card__head h2,
+.session-card__head h2,
+.editor-item-card__title h3 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.detail-hero__copy h1 {
+  font-size: 2rem;
+}
+
+.detail-hero__copy p,
+.detail-body-copy {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.detail-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.detail-stat {
+  display: grid;
+  gap: 0.18rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.85rem 0.9rem;
+}
+
+.detail-stat span {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.detail-stat strong {
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.detail-section,
+.detail-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.detail-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.detail-section__head span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.detail-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.detail-card__head,
+.session-card__head,
+.editor-item-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.detail-badge,
+.editor-item-card__index {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(213, 191, 255, 0.18);
+  background: rgba(141, 75, 255, 0.12);
+  color: rgba(241, 234, 255, 0.94);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.editor-add-form,
+.editor-grid-form,
+.session-form,
+.session-sets {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.editor-grid-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.editor-field,
+.set-row__field {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.editor-field span,
+.set-row__field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.editor-field input,
+.editor-field select,
+.editor-field textarea,
+.set-row__field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  outline: 0;
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.016)),
+    rgba(13, 11, 22, 0.82);
+  padding: 0.84rem 0.9rem;
+  color: var(--text);
+}
+
+.editor-field textarea {
+  resize: vertical;
+  min-height: 5.2rem;
+}
+
+.editor-field--full {
+  grid-column: 1 / -1;
+}
+
+.detail-empty {
+  border: 1px dashed rgba(213, 191, 255, 0.16);
+  border-radius: 1.3rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.detail-empty__title {
+  margin: 0 0 0.3rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.detail-empty__body {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.editor-item-card,
+.session-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.editor-item-card__title {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.editor-item-card__title p,
+.session-card__head p {
+  margin: 0.18rem 0 0;
+  color: var(--text-soft);
+}
+
+.editor-item-card__moves {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.icon-button--small {
+  height: 2.3rem;
+  width: 2.3rem;
+}
+
+.editor-item-card__actions,
+.session-actions,
+.session-meta-row,
+.editor-inline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.editor-inline-meta,
+.session-meta-row,
+.session-note {
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.session-meta-row span,
+.editor-inline-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.session-note {
+  display: grid;
+  gap: 0.2rem;
+  border-radius: 1rem;
+  padding: 0.8rem 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.session-note strong {
+  color: var(--text);
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 0.8fr repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.set-row__label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  padding-bottom: 0.85rem;
+}
+
+@keyframes button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes orb-drift {
   0%,
   100% {
@@ -1334,5 +1751,21 @@ select {
 
   .quick-run-form__grid {
     grid-template-columns: 1fr;
+  }
+
+  .workout-card__actions,
+  .editor-grid-form,
+  .set-row,
+  .detail-hero__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .active-workout-card,
+  .status-card,
+  .editor-item-card__head,
+  .detail-card__head,
+  .session-card__head {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
