@@ -25,7 +25,8 @@ export default async function LoginPage() {
           action={loginAction}
           mode="login"
           title="Bienvenido"
-          subtitle="Accede a tu espacio y sigue construyendo tu sistema de entrenamiento."
+          eyebrow="Mode Train"
+          subtitle="Accede a tu espacio privado y vuelve directo a tu sistema de entrenamiento."
         />
       </div>
     </main>

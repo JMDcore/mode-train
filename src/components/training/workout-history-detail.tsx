@@ -35,18 +35,22 @@ export function WorkoutHistoryDetailView(props: {
             <div className="detail-stat">
               <span>Duracion</span>
               <strong>{props.detail.durationLabel}</strong>
+              <small>Tiempo total</small>
             </div>
             <div className="detail-stat">
               <span>Volumen</span>
               <strong>{new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(props.detail.totalVolumeKg)} kg</strong>
+              <small>Carga movida</small>
             </div>
             <div className="detail-stat">
               <span>Sets</span>
               <strong>{props.detail.savedSets}</strong>
+              <small>Guardados</small>
             </div>
             <div className="detail-stat">
               <span>Ejercicios</span>
               <strong>{props.detail.exerciseCount}</strong>
+              <small>Trabajados</small>
             </div>
           </div>
         </motion.section>
@@ -62,13 +66,12 @@ export function WorkoutHistoryDetailView(props: {
 
           <div className="detail-stack">
             {props.detail.exercises.map((exercise) => (
-              <article key={exercise.exerciseId} className="session-card">
+              <article key={exercise.exerciseId} className="session-card history-workout-card">
                 <div className="session-card__head">
                   <div>
+                    <p className="card-kicker">{exercise.primaryMuscleGroup}</p>
                     <h2>{exercise.exerciseName}</h2>
-                    <p>
-                      {exercise.primaryMuscleGroup} · {exercise.equipment}
-                    </p>
+                    <p>{exercise.equipment}</p>
                   </div>
                   {exercise.targetRangeLabel ? (
                     <span className="detail-badge detail-badge--subtle">
@@ -78,7 +81,7 @@ export function WorkoutHistoryDetailView(props: {
                   ) : null}
                 </div>
 
-                <div className="history-set-list">
+                <div className="history-set-list history-set-list--dense">
                   {exercise.sets.map((set) => (
                     <div key={`${exercise.exerciseId}-${set.setNumber}`} className="history-set-row">
                       <span className="history-set-row__index">

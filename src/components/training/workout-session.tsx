@@ -12,15 +12,16 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
   completeWorkoutSessionAction,
   saveWorkoutExerciseBlockAction,
 } from "@/server/training/actions";
+import { cn } from "@/lib/utils";
 import type { WorkoutSessionDetail } from "@/server/training/workouts";
 import type {
   WorkoutCompleteActionState,
@@ -65,6 +66,11 @@ function buildInitialSetDrafts(exercise: WorkoutSessionDetail["exercises"][numbe
 export function WorkoutSession(props: {
   detail: WorkoutSessionDetail;
 }) {
+  const exerciseProgress = Math.max(
+    1,
+    Math.min(props.detail.totalExercises, props.detail.completedExercises + 1),
+  );
+
   return (
     <main className="detail-page">
       <div className="detail-shell">
@@ -79,14 +85,38 @@ export function WorkoutSession(props: {
           initial={{ opacity: 0, y: 18, scale: 0.985 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="detail-hero"
+          className="detail-hero workout-detail-hero"
         >
+          <div className="workout-detail-hero__image">
+            <Image
+              src="/media/fitness-model.jpg"
+              alt="Workout focus"
+              fill
+              sizes="(max-width: 768px) 100vw, 40vw"
+              className="workout-detail-hero__photo"
+            />
+          </div>
+
+          <div className="workout-detail-hero__overlay" />
+
           <div className="detail-hero__copy">
-            <p className="detail-kicker">Sesion activa</p>
-            <h1>{props.detail.routineName}</h1>
-            <p>
-              Empezaste el {props.detail.startedAtLabel}. Guarda cada bloque para no perder progreso.
-            </p>
+            <p className="detail-kicker">Power</p>
+            <h1>
+              {props.detail.routineName} <span>{exerciseProgress}/{props.detail.totalExercises}</span>
+            </h1>
+            <p>Empezaste el {props.detail.startedAtLabel}. Guarda por bloques y sigue.</p>
+            <div className="workout-progress-dots" aria-hidden="true">
+              {Array.from({ length: props.detail.totalExercises }).map((_, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    "workout-progress-dots__item",
+                    index < props.detail.completedExercises && "workout-progress-dots__item--done",
+                    index === props.detail.completedExercises && "workout-progress-dots__item--current",
+                  )}
+                />
+              ))}
+            </div>
           </div>
 
           <div className="detail-hero__stats">
@@ -133,17 +163,8 @@ function WorkoutExerciseCard(props: {
   sessionId: string;
   exercise: WorkoutSessionDetail["exercises"][number];
 }) {
-  const router = useRouter();
   const [state, formAction] = useActionState(saveWorkoutExerciseBlockAction, initialBlockState);
   const [sets, setSets] = useState<SetDraft[]>(() => buildInitialSetDrafts(props.exercise));
-
-  useEffect(() => {
-    if (!state.success) {
-      return;
-    }
-
-    router.refresh();
-  }, [router, state.success]);
 
   const setsJson = useMemo(
     () =>
@@ -196,17 +217,24 @@ function WorkoutExerciseCard(props: {
         <input type="hidden" name="setsJson" value={setsJson} />
 
         <div className="session-sets">
+          <div className="set-table-head" aria-hidden="true">
+            <span>Set</span>
+            <span>Kg</span>
+            <span>Reps</span>
+            <span>RIR</span>
+          </div>
+
           {sets.map((set, index) => (
             <div key={set.id} className="set-row">
-              <span className="set-row__label">Set {index + 1}</span>
+              <span className="set-row__label">S{index + 1}</span>
 
-              <label className="set-row__field">
-                <span>Kg</span>
+              <label className="set-row__field" aria-label={`Peso set ${index + 1}`}>
                 <input
                   type="number"
                   min="0"
                   max="600"
                   step="0.5"
+                  placeholder="0"
                   value={set.weightKg}
                   onChange={(event) => {
                     const next = event.target.value;
@@ -219,13 +247,13 @@ function WorkoutExerciseCard(props: {
                 />
               </label>
 
-              <label className="set-row__field">
-                <span>Reps</span>
+              <label className="set-row__field" aria-label={`Repeticiones set ${index + 1}`}>
                 <input
                   type="number"
                   min="1"
                   max="100"
                   step="1"
+                  placeholder="0"
                   value={set.reps}
                   onChange={(event) => {
                     const next = event.target.value;
@@ -238,13 +266,13 @@ function WorkoutExerciseCard(props: {
                 />
               </label>
 
-              <label className="set-row__field">
-                <span>RIR</span>
+              <label className="set-row__field" aria-label={`RIR set ${index + 1}`}>
                 <input
                   type="number"
                   min="0"
                   max="5"
                   step="1"
+                  placeholder="0"
                   value={set.rir}
                   onChange={(event) => {
                     const next = event.target.value;
@@ -326,7 +354,7 @@ function CompleteWorkoutCard(props: { sessionId: string }) {
       </div>
 
       <p className="detail-body-copy">
-        Cuando cierres la sesion, el panel principal reflejara tu actividad reciente y progreso.
+        Al cerrar, tu panel y tu progreso se actualizaran al instante.
       </p>
 
       <form action={formAction}>

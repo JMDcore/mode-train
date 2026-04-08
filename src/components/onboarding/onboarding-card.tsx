@@ -27,66 +27,96 @@ export function OnboardingCard(props: { profile: UserProfile }) {
 
   return (
     <div className="auth-card">
-      <div className="auth-card__brand">
-        <div className="auth-card__mark">MT</div>
-        <div>
-          <p className="auth-card__eyebrow">Perfil inicial</p>
-          <h1 className="auth-card__title">Ajusta tu base</h1>
+      <div className="auth-card__hero">
+        <div className="auth-card__brand">
+          <div className="auth-card__mark">MT</div>
+          <div>
+            <p className="auth-card__eyebrow">Perfil inicial</p>
+            <h1 className="auth-card__title">Ajusta tu base</h1>
+          </div>
+        </div>
+
+        <p className="auth-card__subtitle">
+          Muy pocos datos, mucha mas precision. Con esto te dejamos la app lista para
+          darte contexto de verdad.
+        </p>
+
+        <div className="auth-card__chips">
+          <span className="auth-chip">Perfil</span>
+          <span className="auth-chip">Semana inicial</span>
+          <span className="auth-chip">Progreso util</span>
         </div>
       </div>
 
-      <p className="auth-card__subtitle">
-        Necesitamos muy poco para personalizar tu experiencia y empezar a darte una
-        app realmente tuya.
-      </p>
-
       <form action={formAction} className="auth-form">
-        <Field
-          icon={UserRound}
-          label="Nombre"
-          name="displayName"
-          placeholder="Jose Miguel"
-          defaultValue={props.profile.displayName}
-        />
+        <div className="auth-section">
+          <div className="auth-section__head">
+            <p className="auth-section__kicker">Identidad</p>
+            <h2 className="auth-section__title">Tu base personal</h2>
+          </div>
 
-        <SelectField
-          icon={Target}
-          label="Objetivo"
-          name="goal"
-          options={goalOptions}
-          defaultValue={props.profile.goal}
-        />
-
-        <SelectField
-          icon={TrendingUp}
-          label="Nivel"
-          name="experienceLevel"
-          options={levelOptions}
-          defaultValue={props.profile.experienceLevel}
-        />
-
-        <div className="auth-grid">
-          <NumberField
-            label="Sesiones / semana"
-            name="preferredWeeklySessions"
-            placeholder="4"
-            defaultValue={props.profile.preferredWeeklySessions ?? ""}
-          />
-          <NumberField
-            label="Altura (cm)"
-            name="heightCm"
-            placeholder="178"
-            defaultValue={props.profile.heightCm ?? ""}
+          <Field
+            icon={UserRound}
+            label="Nombre"
+            name="displayName"
+            placeholder="Jose Miguel"
+            defaultValue={props.profile.displayName}
           />
         </div>
 
-        <NumberField
-          label="Peso (kg)"
-          name="weightKg"
-          placeholder="77.4"
-          defaultValue={props.profile.weightKg ?? ""}
-          step="0.1"
-        />
+        <div className="auth-section">
+          <div className="auth-section__head">
+            <p className="auth-section__kicker">Entreno</p>
+            <h2 className="auth-section__title">Lo que quieres mejorar</h2>
+          </div>
+
+          <SelectField
+            icon={Target}
+            label="Objetivo"
+            name="goal"
+            options={goalOptions}
+            defaultValue={props.profile.goal}
+          />
+
+          <div className="auth-grid">
+            <SelectField
+              icon={TrendingUp}
+              label="Nivel"
+              name="experienceLevel"
+              options={levelOptions}
+              defaultValue={props.profile.experienceLevel}
+            />
+            <NumberField
+              label="Sesiones / semana"
+              name="preferredWeeklySessions"
+              placeholder="4"
+              defaultValue={props.profile.preferredWeeklySessions ?? ""}
+            />
+          </div>
+        </div>
+
+        <div className="auth-section">
+          <div className="auth-section__head">
+            <p className="auth-section__kicker">Fisico</p>
+            <h2 className="auth-section__title">Punto de partida</h2>
+          </div>
+
+          <div className="auth-grid">
+            <NumberField
+              label="Altura (cm)"
+              name="heightCm"
+              placeholder="178"
+              defaultValue={props.profile.heightCm ?? ""}
+            />
+            <NumberField
+              label="Peso (kg)"
+              name="weightKg"
+              placeholder="77.4"
+              defaultValue={props.profile.weightKg ?? ""}
+              step="0.1"
+            />
+          </div>
+        </div>
 
         {state.error ? <p className="auth-error">{state.error}</p> : null}
 
@@ -185,7 +215,7 @@ function SubmitButton() {
 
   return (
     <button type="submit" className="auth-submit" disabled={pending}>
-      {pending ? "Guardando..." : "Entrar en la app"}
+      {pending ? "Guardando..." : "Entrar en Mode Train"}
     </button>
   );
 }

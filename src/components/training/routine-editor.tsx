@@ -56,12 +56,12 @@ export function RoutineEditor(props: {
           className="detail-hero"
         >
           <div className="detail-hero__copy">
-            <p className="detail-kicker">Editor minimo</p>
+            <p className="detail-kicker">Rutina</p>
             <h1>{props.data.routine.name}</h1>
             <p>
               {props.data.items.length > 0
                 ? `${props.data.items.length} ejercicios listos para entrenar.`
-                : "Empieza anadiendo uno o dos ejercicios base y luego ajustamos el resto."}
+                : "Empieza con uno o dos ejercicios base y ajusta lo esencial."}
             </p>
           </div>
 
@@ -111,7 +111,7 @@ export function RoutineEditor(props: {
               <div className="detail-empty">
                 <p className="detail-empty__title">La rutina esta vacia</p>
                 <p className="detail-empty__body">
-                  Anade un ejercicio y define un objetivo simple de sets, reps y RIR.
+                  Anade un ejercicio y define sets, reps y RIR.
                 </p>
               </div>
             )}

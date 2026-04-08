@@ -21,23 +21,37 @@ type AuthCardProps = {
   mode: "login" | "register";
   title: string;
   subtitle: string;
+  eyebrow?: string;
 };
 
 export function AuthCard(props: AuthCardProps) {
   const [state, formAction] = useActionState(props.action, initialState);
   const isRegister = props.mode === "register";
+  const highlights = isRegister
+    ? ["Privada", "Lista en minutos"]
+    : ["Tu espacio", "Lista para entrenar"];
 
   return (
     <div className="auth-card">
-      <div className="auth-card__brand">
-        <div className="auth-card__mark">MT</div>
-        <div>
-          <p className="auth-card__eyebrow">Mode Train</p>
-          <h1 className="auth-card__title">{props.title}</h1>
+      <div className="auth-card__hero">
+        <div className="auth-card__brand">
+          <div className="auth-card__mark">MT</div>
+          <div>
+            <p className="auth-card__eyebrow">{props.eyebrow ?? "Mode Train"}</p>
+            <h1 className="auth-card__title">{props.title}</h1>
+          </div>
+        </div>
+
+        <p className="auth-card__subtitle">{props.subtitle}</p>
+
+        <div className="auth-card__chips">
+          {highlights.map((item) => (
+            <span key={item} className="auth-chip">
+              {item}
+            </span>
+          ))}
         </div>
       </div>
-
-      <p className="auth-card__subtitle">{props.subtitle}</p>
 
       <form action={formAction} className="auth-form">
         {isRegister ? (

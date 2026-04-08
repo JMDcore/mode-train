@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Manrope, Sora } from "next/font/google";
+import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const displayFont = Sora({
+const displayFont = Space_Grotesk({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["500", "700", "800"],
+  weight: ["500", "700"],
 });
 
 const bodyFont = Manrope({

@@ -25,7 +25,8 @@ export default async function RegisterPage() {
           action={registerAction}
           mode="register"
           title="Crea tu cuenta"
-          subtitle="Una base propia, privada y pensada para entrenar sin friccion."
+          eyebrow="Nuevo acceso"
+          subtitle="Monta una base propia, privada y lista para registrar progreso serio desde el primer dia."
         />
       </div>
     </main>

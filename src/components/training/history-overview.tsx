@@ -27,10 +27,8 @@ export function HistoryOverviewView(props: {
         >
           <div className="detail-hero__copy">
             <p className="detail-kicker">Historial</p>
-            <h1>Lo que ya has hecho</h1>
-            <p>
-              Aqui vive tu actividad cerrada: fuerza, carrera y la foto real de tu consistencia.
-            </p>
+            <h1>Todo lo que ya has hecho</h1>
+            <p>Fuerza, carrera y una foto limpia de tu constancia.</p>
           </div>
 
           <div className="detail-hero__stats">
@@ -38,6 +36,7 @@ export function HistoryOverviewView(props: {
               <div key={metric.label} className="detail-stat">
                 <span>{metric.label}</span>
                 <strong>{metric.value}</strong>
+                <small>{metric.caption}</small>
               </div>
             ))}
           </div>
