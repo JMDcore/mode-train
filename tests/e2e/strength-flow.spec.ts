@@ -69,6 +69,12 @@ test("editar rutina, guardar sets y cerrar sesion", async ({ page }) => {
   await expect(page).toHaveURL(/\/app\/workouts\//);
 
   let firstSessionCard = page.locator(".session-card").first();
+  const trackedExercise = await firstSessionCard.getByRole("heading").textContent();
+
+  if (!trackedExercise) {
+    throw new Error("No se ha podido identificar el ejercicio editado.");
+  }
+
   await firstSessionCard.locator('input[type="number"]').nth(0).fill("100");
   await firstSessionCard.locator('input[type="number"]').nth(1).fill("5");
   await firstSessionCard.locator('input[type="number"]').nth(2).fill("2");
@@ -76,7 +82,7 @@ test("editar rutina, guardar sets y cerrar sesion", async ({ page }) => {
   await page.waitForLoadState("networkidle");
 
   await page.reload();
-  firstSessionCard = page.locator(".session-card").first();
+  firstSessionCard = page.locator(".session-card").filter({ has: page.getByRole("heading", { name: trackedExercise }) });
   await expect(firstSessionCard.locator('input[type="number"]').nth(0)).toHaveValue("100");
   await expect(firstSessionCard.locator('input[type="number"]').nth(1)).toHaveValue("5");
   await expect(firstSessionCard.locator('input[type="number"]').nth(2)).toHaveValue("2");
@@ -85,4 +91,13 @@ test("editar rutina, guardar sets y cerrar sesion", async ({ page }) => {
   await expect(page).toHaveURL(/\/app\?success=workout-completed$/);
   await expect(page.getByText("Sesion completada y guardada.")).toBeVisible();
   await expect(page.getByText("Actividad")).toBeVisible();
+
+  await page.getByRole("link", { name: "Historial" }).click();
+  await expect(page).toHaveURL(/\/app\/history$/);
+  await expect(page.getByText("Actividad reciente")).toBeVisible();
+
+  await page.goto("/app?success=workout-completed");
+  await page.getByRole("link", { name: "Progreso" }).click();
+  await expect(page).toHaveURL(/\/app\/progress$/);
+  await expect(page.getByText("Ejercicios vivos", { exact: true })).toBeVisible();
 });

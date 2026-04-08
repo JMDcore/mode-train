@@ -11,10 +11,12 @@ import {
   Dumbbell,
   Footprints,
   House,
+  History,
   PencilLine,
   Play,
   Plus,
   Route,
+  TrendingUp,
   Trophy,
   Target,
   User,
@@ -342,6 +344,23 @@ function HomeScreen(props: {
           )}
         </div>
       </ScreenSection>
+
+      <ScreenSection icon={TrendingUp} title="Evolucion">
+        <div className="insight-link-grid">
+          <InsightLinkCard
+            href="/app/history"
+            icon={History}
+            title="Historial"
+            body="Sesiones cerradas, carreras y contexto real."
+          />
+          <InsightLinkCard
+            href="/app/progress"
+            icon={TrendingUp}
+            title="Progreso"
+            body="Mejores bloques, cambios y ejercicios vivos."
+          />
+        </div>
+      </ScreenSection>
     </>
   );
 }
@@ -557,6 +576,17 @@ function ProfileScreen(props: {
         Editar perfil
       </Link>
 
+      <div className="profile-link-grid">
+        <Link href="/app/history" className="ghost-button">
+          <History size={15} strokeWidth={2.3} />
+          Ver historial
+        </Link>
+        <Link href="/app/progress" className="ghost-button">
+          <TrendingUp size={15} strokeWidth={2.3} />
+          Ver progreso
+        </Link>
+      </div>
+
       <form action="/logout" method="post">
         <button type="submit" className="logout-button">
           Cerrar sesion
@@ -690,6 +720,30 @@ function WorkoutCard(props: {
       </div>
       {props.footer ? <div className="workout-card__footer">{props.footer}</div> : null}
     </div>
+  );
+}
+
+function InsightLinkCard(props: {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  body: string;
+}) {
+  const Icon = props.icon;
+
+  return (
+    <Link href={props.href} className="history-entry insight-link-card">
+      <div className="history-entry__main">
+        <span className="history-entry__icon">
+          <Icon size={16} strokeWidth={2.2} />
+        </span>
+        <div className="history-entry__copy">
+          <p className="row-card__title">{props.title}</p>
+          <p className="row-card__meta">{props.body}</p>
+        </div>
+      </div>
+      <ChevronRight size={16} strokeWidth={2.2} className="history-entry__chevron" />
+    </Link>
   );
 }
 

@@ -16,6 +16,7 @@
     "starter:smoke": "scripts/with-docker-db.sh node --import tsx scripts/smoke-starter-plan.ts",
     "routine-editor:smoke": "scripts/with-docker-db.sh node --import tsx scripts/smoke-routine-editor.ts",
     "workout:smoke": "scripts/with-docker-db.sh node --import tsx scripts/smoke-workout-lifecycle.ts",
+    "insights:smoke": "scripts/with-docker-db.sh node --import tsx scripts/smoke-history-progress.ts",
     "e2e": "playwright test",
     "e2e:install": "playwright install chromium"
   },

@@ -1692,6 +1692,137 @@ select {
   padding-bottom: 0.85rem;
 }
 
+.history-entry,
+.progress-card {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.016)),
+    rgba(13, 11, 22, 0.82);
+  padding: 0.95rem;
+}
+
+.history-entry {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.history-entry__main,
+.history-entry__copy,
+.history-entry__aside,
+.history-set-list,
+.progress-card__body {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.history-entry__main {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.history-entry__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.45rem;
+  width: 2.45rem;
+  border-radius: 999px;
+  background: rgba(141, 75, 255, 0.12);
+  color: rgba(241, 234, 255, 0.96);
+}
+
+.history-entry__aside {
+  align-items: end;
+  justify-items: end;
+}
+
+.history-entry__chevron {
+  color: var(--text-faint);
+}
+
+.detail-badge--subtle {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft);
+}
+
+.history-set-row,
+.progress-card__head,
+.progress-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.history-set-row {
+  flex-wrap: wrap;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.8rem 0.85rem;
+}
+
+.history-set-row__index,
+.history-set-row__metric,
+.progress-card__trend,
+.progress-card__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.history-set-row__index {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.progress-card__head h2 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.progress-card__head p,
+.progress-card__metric span {
+  margin: 0.18rem 0 0;
+  color: var(--text-soft);
+}
+
+.progress-card__metric {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.progress-card__metric strong {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.progress-card__trend {
+  color: rgba(213, 191, 255, 0.92);
+}
+
+.insight-link-grid,
+.profile-link-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.insight-link-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.insight-link-card {
+  min-height: 100%;
+}
+
 @keyframes button-spin {
   from {
     transform: rotate(0deg);
@@ -1756,7 +1887,8 @@ select {
   .workout-card__actions,
   .editor-grid-form,
   .set-row,
-  .detail-hero__stats {
+  .detail-hero__stats,
+  .insight-link-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1764,7 +1896,10 @@ select {
   .status-card,
   .editor-item-card__head,
   .detail-card__head,
-  .session-card__head {
+  .session-card__head,
+  .history-entry,
+  .progress-card__head,
+  .progress-card__footer {
     align-items: stretch;
     flex-direction: column;
   }
