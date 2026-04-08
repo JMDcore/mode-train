@@ -20,3 +20,5 @@ export type WorkoutCompleteActionState = TrainingActionState & {
 };
 export type RunLogActionState = TrainingActionState;
 export type RoutineItemActionState = TrainingActionState;
+export type ScheduleActionState = TrainingActionState;
+export type ExerciseActionState = TrainingActionState;

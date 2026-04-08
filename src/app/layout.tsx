@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s | Mode Train",
   },
   description:
-    "PWA premium de entrenamiento con foco en gym, running y una capa social privada diseñada para compartir progreso real.",
+    "PWA premium de entrenamiento para gym y running con rutinas, agenda semanal y resumen de progreso.",
   applicationName: "Mode Train",
   alternates: {
     canonical: "/",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Mode Train",
     description:
-      "Training companion oscura, precisa y social-first para registrar sesiones, cuidar tu progreso y compartir solo con tu circulo privado.",
+      "Training companion oscura y precisa para gestionar rutinas, planificar la semana y registrar entrenos de gym y running.",
     type: "website",
     locale: "es_ES",
     siteName: "Mode Train",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Mode Train",
     description:
-      "Training PWA premium con diseño oscuro, motion de alto nivel y progreso compartido con amistades privadas.",
+      "Training PWA premium con rutinas, calendario interno y resumen visual de gym y running.",
   },
   manifest: "/manifest.webmanifest",
   icons: {

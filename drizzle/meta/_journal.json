@@ -8,6 +8,13 @@
       "when": 1775617612382,
       "tag": "0000_pale_beyonder",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775677782946,
+      "tag": "0001_handy_ozymandias",
+      "breakpoints": true
     }
   ]
 }

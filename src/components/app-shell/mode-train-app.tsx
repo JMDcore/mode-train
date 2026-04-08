@@ -5,158 +5,82 @@ import {
   Activity,
   Bell,
   CalendarDays,
-  ChevronLeft,
   ChevronRight,
+  CirclePlus,
   Dumbbell,
   Footprints,
-  History,
   House,
-  Pause,
   PencilLine,
-  Play,
-  Plus,
-  RefreshCcw,
   Route,
-  TrendingUp,
-  Trophy,
+  Sparkles,
+  Target,
+  Trash2,
   User,
-  Users,
-  Zap,
 } from "lucide-react";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 
-import { QuickRunForm } from "@/components/training/quick-run-form";
-import { QuickRoutineForm } from "@/components/training/quick-routine-form";
-import { StartWorkoutButton } from "@/components/training/start-workout-button";
-import { StarterWeekButton } from "@/components/training/starter-week-button";
 import { cn } from "@/lib/utils";
 import type { AppSnapshot } from "@/server/app/snapshot";
 import type { AuthUser } from "@/server/auth/user";
 import type { UserProfile } from "@/server/profile";
+import {
+  createScheduleEntryAction,
+  deleteScheduleEntryAction,
+  logRunningSessionAction,
+} from "@/server/training/actions";
+import type {
+  RunLogActionState,
+  ScheduleActionState,
+} from "@/server/training/types";
+import { StartWorkoutButton } from "@/components/training/start-workout-button";
 
 const transition = {
-  duration: 0.44,
+  duration: 0.42,
   ease: [0.22, 1, 0.36, 1] as const,
 };
 
 const tabs = [
   { key: "home", label: "Inicio", icon: House },
-  { key: "train", label: "Entrena", icon: Dumbbell },
-  { key: "social", label: "Circulo", icon: Users },
+  { key: "agenda", label: "Agenda", icon: CalendarDays },
+  { key: "summary", label: "Resumen", icon: Activity },
   { key: "profile", label: "Yo", icon: User },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
 
-const headerCopy: Record<TabKey, { eyebrow: string; title: string }> = {
-  home: { eyebrow: "Mode Train", title: "" },
-  train: { eyebrow: "Programas", title: "" },
-  social: { eyebrow: "Privado", title: "" },
-  profile: { eyebrow: "Cuenta", title: "" },
+const initialScheduleState: ScheduleActionState = {
+  error: null,
+  success: null,
 };
 
-const weekOrder = [
-  { key: "monday", shortLabel: "L" },
-  { key: "tuesday", shortLabel: "M" },
-  { key: "wednesday", shortLabel: "X" },
-  { key: "thursday", shortLabel: "J" },
-  { key: "friday", shortLabel: "V" },
-  { key: "saturday", shortLabel: "S" },
-  { key: "sunday", shortLabel: "D" },
-] as const;
+const initialRunState: RunLogActionState = {
+  error: null,
+  success: null,
+};
 
-const featuredPrograms = [
-  {
-    id: "upper-power",
-    title: "Torso potente",
-    body: "Pecho, hombro y brazo con lectura clara y fuerza limpia.",
-    difficulty: "Intermedio",
-    duration: "4 semanas",
-    progress: "24 / 36",
-    imageSrc: "/media/anatomy-mannequin.svg",
-    imagePosition: "center 22%",
-    accent: "violet" as const,
-  },
-  {
-    id: "shape-mode",
-    title: "Shape limpio",
-    body: "Torso visual, hombro fino y volumen medio bien controlado.",
-    difficulty: "Shape",
-    duration: "3 semanas",
-    progress: "12 / 18",
-    imageSrc: "/media/anatomy-mannequin.svg",
-    imagePosition: "center 14%",
-    accent: "lime" as const,
-  },
-] as const;
-
-function normalizeCopyValue(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
+function formatMetricCaption(key: AppSnapshot["focusMetrics"][number]["key"]) {
+  switch (key) {
+    case "gym":
+      return "sesiones";
+    case "running":
+      return "este mes";
+    case "routines":
+      return "guardadas";
+    default:
+      return "";
+  }
 }
 
-function translateGoal(value: string) {
-  const normalized = normalizeCopyValue(value);
-
-  if (normalized.includes("musculo") || normalized.includes("muscle")) {
-    return "Ganar musculo";
-  }
-
-  if (normalized.includes("grasa") || normalized.includes("fat")) {
-    return "Perder grasa";
-  }
-
-  if (normalized.includes("fuerte") || normalized.includes("strong")) {
-    return "Ser mas fuerte";
-  }
-
-  if (normalized.includes("hibrid") || normalized.includes("hybrid")) {
-    return "Fitness hibrido";
-  }
-
-  if (normalized.includes("consisten")) {
-    return "Crear constancia";
-  }
-
-  return value;
-}
-
-function translateLevel(value: string) {
-  const normalized = normalizeCopyValue(value);
-
-  if (normalized.includes("beginner") || normalized.includes("principiante")) {
-    return "Principiante";
-  }
-
-  if (normalized.includes("intermediate") || normalized.includes("intermedio")) {
-    return "Intermedio";
-  }
-
-  if (normalized.includes("advanced") || normalized.includes("avanzado")) {
-    return "Avanzado";
-  }
-
-  return value;
-}
-
-function extractFirstName(value: string) {
-  return value.trim().split(/\s+/)[0] ?? value;
-}
-
-function formatDashboardDate() {
-  const value = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-
-  return value.charAt(0).toUpperCase() + value.slice(1);
+function formatRunningLabel(
+  value: string,
+  fallback = "Sin dato",
+) {
+  return value === "--" ? fallback : value;
 }
 
 export function ModeTrainApp(props: {
@@ -166,28 +90,30 @@ export function ModeTrainApp(props: {
   completionMessage?: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<TabKey>("home");
-  const header = headerCopy[activeTab];
 
   return (
     <div className="app-wrap">
       <Backdrop />
 
       <motion.main
-        initial={{ opacity: 0, y: 18, scale: 0.988 }}
+        initial={{ opacity: 0, y: 16, scale: 0.988 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ ...transition, duration: 0.58 }}
-        className="app-shell"
+        transition={{ ...transition, duration: 0.56 }}
+        className="app-shell mt-shell"
       >
-        <header className={cn("app-header", !header.title && "app-header--minimal")}>
+        <header className="app-header mt-header">
           <div>
-            <p className="app-eyebrow">{header.eyebrow}</p>
-            {header.title ? <h1 className="app-title">{header.title}</h1> : null}
+            <p className="app-eyebrow">Mode Train</p>
+            <h1 className="mt-header__title">{props.snapshot.dateLabel}</h1>
           </div>
 
           <div className="header-actions">
-            <Link href="/app/history" className="icon-button" aria-label="Historial">
-              <History size={17} strokeWidth={2.2} />
+            <Link href="/app/routines" className="icon-button" aria-label="Gestionar rutinas">
+              <Dumbbell size={17} strokeWidth={2.2} />
             </Link>
+            <button type="button" className="icon-button" aria-label="Avisos">
+              <Bell size={17} strokeWidth={2.2} />
+            </button>
             <button
               type="button"
               className="profile-badge"
@@ -205,63 +131,48 @@ export function ModeTrainApp(props: {
               key={activeTab}
               initial={{ opacity: 0, y: 16, filter: "blur(10px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -10, filter: "blur(8px)" }}
+              exit={{ opacity: 0, y: -8, filter: "blur(8px)" }}
               transition={transition}
               className="screen-stack"
             >
               {activeTab === "home" ? (
                 <HomeScreen
                   user={props.user}
-                  completionMessage={props.completionMessage ?? null}
                   snapshot={props.snapshot}
-                  onNavigate={(tab) => setActiveTab(tab)}
+                  completionMessage={props.completionMessage ?? null}
+                  onNavigate={setActiveTab}
                 />
               ) : null}
-              {activeTab === "train" ? <TrainScreen snapshot={props.snapshot} /> : null}
-              {activeTab === "social" ? <SocialScreen snapshot={props.snapshot} /> : null}
+              {activeTab === "agenda" ? <AgendaScreen snapshot={props.snapshot} /> : null}
+              {activeTab === "summary" ? <SummaryScreen snapshot={props.snapshot} /> : null}
               {activeTab === "profile" ? (
-                <ProfileScreen
-                  user={props.user}
-                  profile={props.profile}
-                  snapshot={props.snapshot}
-                />
+                <ProfileScreen profile={props.profile} snapshot={props.snapshot} />
               ) : null}
             </motion.div>
           </AnimatePresence>
         </div>
 
         <footer className="app-footer">
-          <LayoutGroup id="tab-bar">
-            <nav className="tab-bar">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const active = tab.key === activeTab;
+          <nav className="mt-tabbar">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const active = tab.key === activeTab;
 
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    className={cn("tab-item", active && "tab-item--active")}
-                    aria-label={tab.label}
-                    aria-pressed={active}
-                  >
-                    {active ? (
-                      <motion.span
-                        layoutId="tab-highlight"
-                        className="tab-item__highlight"
-                        transition={transition}
-                      />
-                    ) : null}
-                    <span className="tab-item__content">
-                      <Icon size={18} strokeWidth={2.15} />
-                      <span>{tab.label}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-          </LayoutGroup>
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={cn("mt-tabbar__item", active && "mt-tabbar__item--active")}
+                  onClick={() => setActiveTab(tab.key)}
+                  aria-label={tab.label}
+                  aria-pressed={active}
+                >
+                  <Icon size={18} strokeWidth={2.3} />
+                  {active ? <span className="mt-tabbar__dot" aria-hidden="true" /> : null}
+                </button>
+              );
+            })}
+          </nav>
         </footer>
       </motion.main>
     </div>
@@ -271,962 +182,921 @@ export function ModeTrainApp(props: {
 function HomeScreen(props: {
   user: AuthUser;
   snapshot: AppSnapshot;
-  onNavigate: (tab: TabKey) => void;
   completionMessage: string | null;
+  onNavigate: (tab: TabKey) => void;
 }) {
-  const heroMeta = props.snapshot.heroMeta.filter(Boolean).join(" · ");
-  const greetingName = extractFirstName(props.user.displayName);
-  const notificationCount = Math.max(1, props.snapshot.socialCounts.notifications);
-  const routinesStat = props.snapshot.quickStats[1];
-  const baseStat = props.snapshot.quickStats[2];
-  const sessionsPlanned = Math.max(props.snapshot.weeklyPlan.length, props.snapshot.todayItems.length);
-
   return (
-    <>
-      {props.completionMessage ? (
-        <SurfaceCard className="status-card">
-          <div className="status-card__icon">
-            <Zap size={16} strokeWidth={2.3} />
+    <div className="mt-screen">
+      <section className="mt-dashboard-card">
+        <div className="mt-dashboard-card__top">
+          <div className="mt-greeting">
+            <div className="mt-greeting__avatar">{props.user.initials}</div>
+            <div>
+              <p>{props.snapshot.dateLabel}</p>
+              <h2>
+                Hola, {props.snapshot.firstName}
+                <span> 👋</span>
+              </h2>
+            </div>
           </div>
+          <span className="mt-notification-badge">
+            {props.snapshot.schedule.todayEntries.length}
+          </span>
+        </div>
+
+        <div className="mt-dashboard-card__meta">
           <div>
-            <p className="row-card__title">{props.completionMessage}</p>
-            <p className="row-card__meta">Tu panel ya esta actualizado.</p>
+            <span>Modo actual</span>
+            <strong>{props.snapshot.goalLabel}</strong>
           </div>
-        </SurfaceCard>
-      ) : null}
-
-      <SurfaceCard tone="accent" className="dashboard-greeting-card">
-        <div className="dashboard-greeting-card__profile">
-          <div className="dashboard-greeting-card__avatar">{props.user.initials}</div>
-          <div>
-            <p className="dashboard-greeting-card__date">{formatDashboardDate()}</p>
-            <h2 className="dashboard-greeting-card__title">Hola, {greetingName}</h2>
-          </div>
+          <div className="mt-level-pill">{props.snapshot.levelLabel}</div>
         </div>
 
-        <button type="button" className="dashboard-greeting-card__notify" aria-label="Notificaciones">
-          <span className="dashboard-greeting-card__notify-count">{notificationCount}</span>
-          <Bell size={18} strokeWidth={2.2} />
-        </button>
-      </SurfaceCard>
-
-      <SurfaceCard tone="accent" className="analytics-board analytics-board--home">
-        <div className="analytics-board__program-status">
-          <div>
-            <p className="analytics-board__kicker">Actual</p>
-            <h3 className="analytics-board__status-title">
-              {props.snapshot.activeWorkoutSummary
-                ? "1 bloque en marcha"
-                : props.snapshot.routines.length > 0
-                  ? `${props.snapshot.routines.length} bloques activos`
-                  : "Sin programas"}
-            </h3>
-          </div>
-
-          <div className="program-bubble-stack">
-            <span className="program-bubble program-bubble--violet">
-              <Dumbbell size={13} strokeWidth={2.2} />
-            </span>
-            <span className="program-bubble program-bubble--lime">
-              <Route size={13} strokeWidth={2.2} />
-            </span>
-            <span className="program-bubble program-bubble--pink">
-              <Zap size={13} strokeWidth={2.2} />
-            </span>
-            <button type="button" className="program-bubble program-bubble--ghost">
-              Nuevo
-            </button>
-          </div>
+        <div className="mt-ring-grid">
+          {props.snapshot.focusMetrics.map((metric) => (
+            <RingMetric key={metric.key} metric={metric} />
+          ))}
         </div>
 
-        <div className="period-selector">
-          <button type="button" className="period-selector__arrow" aria-label="Periodo anterior">
-            <ChevronLeft size={16} strokeWidth={2.3} />
-          </button>
-          <button type="button" className="period-selector__label">
-            Este mes
-          </button>
-          <button type="button" className="period-selector__arrow" aria-label="Periodo siguiente">
-            <ChevronRight size={16} strokeWidth={2.3} />
-          </button>
-        </div>
-
-        <div className="analytics-board__metrics analytics-board__metrics--hero">
-          <OrbitMetric
-            label="Ritmo"
-            value={`${props.snapshot.readiness}`}
-            note="Hoy"
-            progress={props.snapshot.readiness}
-            tone="pink"
-          />
-          <OrbitMetric
-            label="Bloques"
-            value={routinesStat?.value ?? "0"}
-            note="Activos"
-            progress={Math.min(100, Number(routinesStat?.value ?? 0) * 22)}
-            tone="lime"
-          />
-          <OrbitMetric
-            label="Base"
-            value={baseStat?.value ?? "0"}
-            note="Items"
-            progress={Math.min(100, Number(baseStat?.value ?? 0) * 4)}
-            tone="cyan"
-          />
-        </div>
-
-        <div className="analytics-board__program analytics-board__program--home">
-          <div className="analytics-board__copy">
-            <p className="analytics-board__kicker">Programa actual</p>
-            <h2 className="analytics-board__headline">{props.snapshot.heroTitle}</h2>
-            <p className="analytics-board__subline">
-              {heroMeta || "Activa un bloque limpio y empieza a generar progreso real."}
-            </p>
-          </div>
-        </div>
-
-        <div className="dashboard-inline-actions">
-          {props.snapshot.activeWorkoutSummary ? (
-            <Link
-              href={`/app/workouts/${props.snapshot.activeWorkoutSummary.sessionId}`}
-              className="dashboard-inline-actions__button dashboard-inline-actions__button--cta"
+        <div className="mt-week-strip">
+          {props.snapshot.schedule.days.map((day) => (
+            <button
+              key={day.isoDate}
+              type="button"
+              className={cn("mt-week-dot", day.isToday && "mt-week-dot--today")}
+              onClick={() => props.onNavigate("agenda")}
             >
-              <Play size={15} strokeWidth={2.2} />
-              Reanudar
-            </Link>
-          ) : props.snapshot.canGenerateStarterWeek ? (
-            <StarterWeekButton className="dashboard-inline-actions__button dashboard-inline-actions__button--cta" />
-          ) : (
-            <button type="button" className="dashboard-inline-actions__button">
-              <Pause size={15} strokeWidth={2.2} />
-              Pausar bloque
+              <span className="mt-week-dot__count">{day.plannedCount}</span>
+              <span className="mt-week-dot__ring" />
+              <span className="mt-week-dot__label">{day.dayShort}</span>
             </button>
-          )}
-
-          <button type="button" className="dashboard-inline-actions__button dashboard-inline-actions__button--accent">
-            <RefreshCcw size={15} strokeWidth={2.2} />
-            Cambiar plan
-          </button>
-        </div>
-
-        <div className="analytics-board__footer analytics-board__footer--home">
-          <WeekStrip weeklyPlan={props.snapshot.weeklyPlan} />
-          <div className="analytics-board__note analytics-board__note--home">
-            <span>Semana</span>
-            <strong>{sessionsPlanned} dias</strong>
-            <p>
-              {props.snapshot.activeWorkoutSummary
-                ? `${props.snapshot.activeWorkoutSummary.completedExercises}/${props.snapshot.activeWorkoutSummary.totalExercises} ejercicios ya tocados`
-                : props.snapshot.canGenerateStarterWeek
-                  ? "Genera tu primera semana con un toque."
-                  : `${props.snapshot.weeklyPlan.length} dias planificados para seguir el bloque.`}
-            </p>
-          </div>
-        </div>
-      </SurfaceCard>
-
-      {props.snapshot.activeWorkoutSummary ? (
-        <ActiveWorkoutCard summary={props.snapshot.activeWorkoutSummary} compact />
-      ) : null}
-
-      <div className="dashboard-grid">
-        <SurfaceCard className="module-panel">
-          <div className="section-panel-head">
-            <div className="section-head__title">
-              <span className="section-head__icon">
-                <CalendarDays size={15} strokeWidth={2.2} />
-              </span>
-              <span>Hoy</span>
-            </div>
-            <span className="meta-pill">
-              {props.snapshot.todayItems.length > 0 ? `${props.snapshot.todayItems.length} items` : "Sin carga"}
-            </span>
-          </div>
-          <div className="list-stack">
-            {props.snapshot.todayItems.length > 0 ? (
-              props.snapshot.todayItems.map((item) => (
-                <RowCard
-                  key={`${item.kind}-${item.title}`}
-                  icon={
-                    item.kind === "run"
-                      ? Footprints
-                      : item.kind === "library"
-                        ? Route
-                        : Dumbbell
-                  }
-                  title={item.title}
-                  meta={item.meta}
-                />
-              ))
-            ) : (
-              <EmptyCard
-                title="Nada pendiente"
-                body="Cuando montes tu semana, veras aqui el foco de hoy."
-              />
-            )}
-          </div>
-        </SurfaceCard>
-
-        <SurfaceCard className="module-panel module-panel--quiet">
-          <div className="section-panel-head">
-            <div className="section-head__title">
-              <span className="section-head__icon">
-                <Activity size={15} strokeWidth={2.2} />
-              </span>
-              <span>Actividad reciente</span>
-            </div>
-            <span className="summary-panel__meta">Ultimo cierre</span>
-          </div>
-          <div className="list-stack">
-            {props.snapshot.recentActivity.length > 0 ? (
-              props.snapshot.recentActivity.map((item) => (
-                <RowCard
-                  key={item.id}
-                  icon={item.kind === "run" ? Footprints : Dumbbell}
-                  title={item.title}
-                  meta={item.meta}
-                />
-              ))
-            ) : (
-              <EmptyCard
-                title="Actividad vacia"
-                body="Empieza una sesion o guarda una carrera y apareceran aqui."
-              />
-            )}
-          </div>
-        </SurfaceCard>
-      </div>
-
-      <div className="insight-pair-grid">
-          <InsightLinkCard
-          href="/app/history"
-          icon={History}
-          title="Historial"
-          body="Todo lo que ya has cerrado."
-        />
-        <InsightLinkCard
-          href="/app/progress"
-          icon={TrendingUp}
-          title="Progreso"
-          body="Tus ejercicios y bloques vivos."
-        />
-      </div>
-
-      <section className="section-stack">
-        <div className="section-head">
-          <div className="section-head__title">
-            <span className="section-head__icon">
-              <Dumbbell size={15} strokeWidth={2.2} />
-            </span>
-            <span>Programas</span>
-          </div>
-        </div>
-        <div className="program-showcase-grid">
-          {featuredPrograms.map((program, index) => (
-            <ProgramShowcaseCard
-              key={program.id}
-              program={program}
-              actionLabel={index === 0 ? "Continuar" : "Ver"}
-            />
           ))}
         </div>
       </section>
-    </>
-  );
-}
 
-function TrainScreen(props: { snapshot: AppSnapshot }) {
-  const primaryRoutine = props.snapshot.routines[0];
-  const routineCount = `${props.snapshot.routines.length}`;
-  const planCount = `${props.snapshot.weeklyPlan.length}`;
-  const featuredProgramsWithAction = featuredPrograms.map((program, index) => ({
-    ...program,
-    actionLabel: index === 0 ? "Continuar" : "Abrir",
-  }));
+      {props.completionMessage ? (
+        <div className="mt-inline-note">{props.completionMessage}</div>
+      ) : null}
 
-  return (
-    <>
-      <SurfaceCard tone="accent" className="train-stage">
-        <div className="train-stage__head">
-          <div>
-            <p className="analytics-board__eyebrow">Programas</p>
-            <h2 className="train-stage__title">Tus bloques</h2>
-          </div>
-          <span className="panel-count-orb">{routineCount}</span>
-        </div>
-
-        <div className="train-stage__toggle-stack">
-          <div className="train-canvas__tabs">
-            <button type="button" className="train-canvas__tab train-canvas__tab--active">Mios</button>
-            <button type="button" className="train-canvas__tab">Base</button>
-            <button type="button" className="train-canvas__tab">Drafts</button>
-          </div>
-
-          <div className="train-canvas__switch">
-            <button type="button" className="train-canvas__switch-item train-canvas__switch-item--active">Casa</button>
-            <button type="button" className="train-canvas__switch-item">Gym</button>
-          </div>
-        </div>
-
-        <div className="train-stage__deck">
-          {featuredProgramsWithAction.map((program) => (
-            <ProgramShowcaseCard
-              key={program.id}
-              program={program}
-              actionLabel={program.actionLabel}
-            />
-          ))}
-        </div>
-
-        <div className="train-stage__primary">
-          <div>
-            <p className="program-showcase-card__eyebrow">Bloque principal</p>
-            <h3 className="train-stage__primary-title">
-              {props.snapshot.activeWorkoutSummary?.routineName ??
-                primaryRoutine?.name ??
-                "Prepara tu semana"}
-            </h3>
-          </div>
-
-          <span className="train-stage__calendar-pill">
-            <CalendarDays size={14} strokeWidth={2.2} />
-            {props.snapshot.activeWorkoutSummary ? "En marcha" : `${planCount} dias`}
-          </span>
-        </div>
-      </SurfaceCard>
-
-      <SurfaceCard className="studio-panel">
-        <div className="studio-panel__head">
-          <div className="section-head__title">
-            <span className="section-head__icon">
-              <Dumbbell size={15} strokeWidth={2.2} />
-            </span>
-            <span>Rutinas</span>
-          </div>
-          <span className="panel-count-orb panel-count-orb--muted">{props.snapshot.routines.length}</span>
-        </div>
-
-        <div className="studio-panel__composer">
-          <QuickRoutineForm />
-        </div>
-
-        <div className="studio-panel__list">
-          {props.snapshot.routines.length > 0 ? (
-            props.snapshot.routines.map((routine) => (
-              <RoutineStudioCard
-                key={routine.id}
-                activeWorkoutSummary={props.snapshot.activeWorkoutSummary}
-                itemCount={routine.itemCount}
-                routineId={routine.id}
-                title={routine.name}
-              />
-            ))
-          ) : (
-            <PanelEmptyCard
-              title="Aun no tienes rutinas"
-              body="Crea una y dejala lista para entrenar."
-            />
-          )}
-        </div>
-      </SurfaceCard>
-
-      <SurfaceCard className="train-subpanel">
-        <div className="studio-panel__head">
-          <div className="section-head__title">
-            <span className="section-head__icon">
-              <CalendarDays size={15} strokeWidth={2.2} />
-            </span>
-            <span>Semana</span>
-          </div>
-          <span className="summary-panel__meta">
-            {props.snapshot.weeklyPlan.length > 0 ? `${props.snapshot.weeklyPlan.length} dias` : "Sin plan"}
-          </span>
-        </div>
-
-        <div className="train-mini-list">
-          {props.snapshot.weeklyPlan.length > 0 ? (
-            props.snapshot.weeklyPlan.map((entry) => (
-              <TrainMiniRow
-                key={entry.id}
-                icon={entry.kind === "run" ? Footprints : CalendarDays}
-                title={entry.dayLabel}
-                meta={`${entry.title} · ${entry.meta}`}
-              />
-            ))
-          ) : (
-            <PanelEmptyCard
-              title="Sin plan semanal"
-              body="La semana inicial te deja la base lista en un toque."
-            />
-          )}
-        </div>
-      </SurfaceCard>
-
-      <SurfaceCard className="train-subpanel train-subpanel--quiet">
-        <div className="studio-panel__head">
-          <div className="section-head__title">
-            <span className="section-head__icon">
-              <Footprints size={15} strokeWidth={2.2} />
-            </span>
-            <span>Carrera</span>
-          </div>
-          <span className="summary-panel__meta">Registro rapido</span>
-        </div>
-        <QuickRunForm />
-      </SurfaceCard>
-
-      <SurfaceCard className="train-subpanel">
-        <div className="studio-panel__head">
-          <div className="section-head__title">
-            <span className="section-head__icon">
-              <Route size={15} strokeWidth={2.2} />
-            </span>
-            <span>Biblioteca</span>
-          </div>
-          <span className="summary-panel__meta">{props.snapshot.library.length} ejercicios</span>
-        </div>
-
-        <div className="train-mini-list">
-          {props.snapshot.library.slice(0, 5).map((exercise) => (
-            <TrainMiniRow
-              key={exercise.id}
-              icon={exercise.primaryMuscleGroup === "Cardio" ? Footprints : Activity}
-              title={exercise.name}
-              meta={`${exercise.primaryMuscleGroup} · ${exercise.equipment}`}
-            />
-          ))}
-        </div>
-      </SurfaceCard>
-    </>
-  );
-}
-
-function RoutineStudioCard(props: {
-  routineId: string;
-  title: string;
-  itemCount: number;
-  activeWorkoutSummary: AppSnapshot["activeWorkoutSummary"];
-}) {
-  const hasActiveWorkout = Boolean(props.activeWorkoutSummary);
-  const isCurrentRoutineActive = props.activeWorkoutSummary?.routineId === props.routineId;
-
-  return (
-    <article className="routine-studio-card">
-      <div className="routine-studio-card__head">
-        <span className="routine-studio-card__icon">
-          <Dumbbell size={16} strokeWidth={2.2} />
-        </span>
-
-        <div className="routine-studio-card__copy">
-          <h3>{props.title}</h3>
-          <p>{props.itemCount} ejercicios</p>
-        </div>
-
-        <span className={cn("routine-studio-card__chip", props.itemCount === 0 && "routine-studio-card__chip--muted")}>
-          {props.itemCount > 0 ? "Lista" : "Vacia"}
-        </span>
-      </div>
-
-      <div className="routine-studio-card__footer">
-        <Link href={`/app/routines/${props.routineId}`} className="routine-studio-card__secondary">
-          <PencilLine size={15} strokeWidth={2.3} />
-          {props.itemCount > 0 ? "Editar" : "Completar"}
-        </Link>
-
-        {props.itemCount === 0 ? null : hasActiveWorkout && !isCurrentRoutineActive ? (
-          <Link
-            href={`/app/workouts/${props.activeWorkoutSummary!.sessionId}`}
-            className="routine-studio-card__primary"
-          >
-            <Play size={15} strokeWidth={2.3} />
-            Ver activa
-          </Link>
-        ) : (
-          <StartWorkoutButton
-            className="routine-studio-card__primary"
-            compact
-            routineTemplateId={props.routineId}
-            label={isCurrentRoutineActive ? "Reanudar" : "Iniciar"}
-            resume={isCurrentRoutineActive}
+      <section className="mt-focus-card">
+        <div className="mt-focus-card__art">
+          <Image
+            src="/media/anatomy-mannequin.svg"
+            alt="Anatomia"
+            fill
+            sizes="(max-width: 768px) 100vw, 40vw"
+            className="mt-focus-card__image"
           />
-        )}
-      </div>
-    </article>
-  );
-}
-
-function TrainMiniRow(props: { icon: LucideIcon; title: string; meta: string }) {
-  const Icon = props.icon;
-
-  return (
-    <article className="train-mini-row">
-      <span className="train-mini-row__icon">
-        <Icon size={15} strokeWidth={2.2} />
-      </span>
-      <div className="train-mini-row__copy">
-        <strong>{props.title}</strong>
-        <span>{props.meta}</span>
-      </div>
-    </article>
-  );
-}
-
-function PanelEmptyCard(props: { title: string; body: string }) {
-  return (
-    <article className="panel-empty-card">
-      <strong>{props.title}</strong>
-      <p>{props.body}</p>
-    </article>
-  );
-}
-
-function SocialScreen(props: { snapshot: AppSnapshot }) {
-  return (
-    <>
-      <SurfaceCard tone="accent" className="hero-card hero-card--compact">
-        <div className="hero-card__copy">
-          <div className="hero-chip">
-            <Users size={14} strokeWidth={2.2} />
-            Solo amistades
-          </div>
-          <h2 className="hero-card__title">Circulo privado</h2>
-          <p className="hero-card__subline">
-            Progreso compartido solo con la gente que tu aceptes.
-          </p>
+          <div className="mt-focus-card__veil" />
         </div>
 
-        <div className="hero-card__footer hero-card__footer--stack">
-          <div className="pill-soft">
-            <Users size={14} strokeWidth={2.2} />
-            {props.snapshot.socialCounts.friends} amistades
+        <div className="mt-focus-card__content">
+          <div className="mt-focus-card__head">
+            <span className="mt-chip mt-chip--violet">Rutina principal</span>
+            <span className="mt-chip mt-chip--lime">
+              {props.snapshot.activeWorkoutSummary
+                ? `${props.snapshot.activeWorkoutSummary.completedExercises}/${props.snapshot.activeWorkoutSummary.totalExercises}`
+                : props.snapshot.defaultRoutine
+                  ? "Lista"
+                  : "Sin rutina"}
+            </span>
           </div>
-          <div className="pill-soft">
-            <Plus size={14} strokeWidth={2.2} />
-            {props.snapshot.socialCounts.pending} pendientes
+
+          <div className="mt-focus-card__copy">
+            <p className="mt-kicker">En foco</p>
+            <h3>
+              {props.snapshot.activeWorkoutSummary
+                ? props.snapshot.activeWorkoutSummary.routineName
+                : props.snapshot.defaultRoutine?.name ?? "Crea tu primera rutina"}
+            </h3>
+            <p>
+              {props.snapshot.activeWorkoutSummary
+                ? `Guardaste ${props.snapshot.activeWorkoutSummary.savedSets} sets y puedes seguir donde lo dejaste.`
+                : props.snapshot.defaultRoutine
+                  ? "Usaremos la rutina agendada de hoy como seleccion predeterminada cuando vayas a entrenar."
+                  : "Empieza creando una plantilla y dejala lista para agendarla en tu semana."}
+            </p>
           </div>
-        </div>
-      </SurfaceCard>
 
-      <div className="social-stat-grid">
-        <MetricTile icon={Users} label="Amistades" value={`${props.snapshot.socialCounts.friends}`} />
-        <MetricTile icon={Activity} label="Avisos" value={`${props.snapshot.socialCounts.notifications}`} />
-        <MetricTile icon={Plus} label="Pendientes" value={`${props.snapshot.socialCounts.pending}`} />
-      </div>
-
-      <ScreenSection icon={Activity} title="Preview">
-        <div className="list-stack">
-          {props.snapshot.socialCounts.friends > 0 ? (
-            props.snapshot.socialPreview.map((item) => (
-              <FeedCard
-                key={item.name}
-                name={item.name}
-                title={item.caption}
-                value={item.value}
-                tint={item.tint}
+          <div className="mt-focus-card__actions">
+            {props.snapshot.activeWorkoutSummary ? (
+              <Link
+                href={`/app/workouts/${props.snapshot.activeWorkoutSummary.sessionId}`}
+                className="mt-primary-pill"
+              >
+                <span className="mt-primary-pill__play" />
+                Reanudar
+              </Link>
+            ) : props.snapshot.defaultRoutine ? (
+              <StartWorkoutButton
+                routineTemplateId={props.snapshot.defaultRoutine.id}
+                label="Entrenar"
+                className="mt-primary-pill"
               />
-            ))
-          ) : (
-            <EmptyCard
-              title="Tu circulo esta vacio"
-              body="La capa social ya esta preparada para cuando invites a tu gente."
-            />
-          )}
-        </div>
-      </ScreenSection>
+            ) : (
+              <Link href="/app/routines" className="mt-primary-pill">
+                <span className="mt-primary-pill__play" />
+                Crear rutina
+              </Link>
+            )}
 
-      <SurfaceCard>
-        <div className="challenge-card">
-          <div className="challenge-card__icon">
-            <Trophy size={18} strokeWidth={2.2} />
+            <Link href="/app/routines" className="mt-secondary-pill">
+              Gestionar rutinas
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-home-grid">
+        <button
+          type="button"
+          className="mt-mini-panel"
+          onClick={() => props.onNavigate("agenda")}
+        >
+          <div className="mt-mini-panel__icon">
+            <CalendarDays size={18} strokeWidth={2.2} />
           </div>
           <div>
-            <p className="card-kicker">Reto</p>
-            <h3 className="challenge-card__title">4 sesiones esta semana</h3>
+            <p>Agenda</p>
+            <span>
+              {props.snapshot.schedule.todayEntries.length > 0
+                ? `${props.snapshot.schedule.todayEntries.length} para hoy`
+                : "Sin plan hoy"}
+            </span>
           </div>
-          <ChevronRight size={18} strokeWidth={2.2} className="history-entry__chevron" />
+          <ChevronRight size={16} strokeWidth={2.2} />
+        </button>
+
+        <button
+          type="button"
+          className="mt-mini-panel"
+          onClick={() => props.onNavigate("summary")}
+        >
+          <div className="mt-mini-panel__icon">
+            <Activity size={18} strokeWidth={2.2} />
+          </div>
+          <div>
+            <p>Resumen</p>
+            <span>{props.snapshot.summary.gym.month.highlight} movidos este mes</span>
+          </div>
+          <ChevronRight size={16} strokeWidth={2.2} />
+        </button>
+      </section>
+
+      <section className="mt-list-section">
+        <div className="mt-section-head">
+          <span>Hoy</span>
+          <button type="button" onClick={() => props.onNavigate("agenda")}>
+            Ver agenda
+          </button>
         </div>
-      </SurfaceCard>
-    </>
+
+        {props.snapshot.schedule.todayEntries.length > 0 ? (
+          props.snapshot.schedule.todayEntries.map((entry) => (
+            <article key={entry.id} className="mt-agenda-row">
+              <div className={cn("mt-agenda-row__icon", entry.entryType === "gym" ? "mt-agenda-row__icon--violet" : "mt-agenda-row__icon--lime")}>
+                {entry.entryType === "gym" ? (
+                  <Dumbbell size={16} strokeWidth={2.2} />
+                ) : (
+                  <Footprints size={16} strokeWidth={2.2} />
+                )}
+              </div>
+              <div className="mt-agenda-row__copy">
+                <strong>{entry.title}</strong>
+                <span>{entry.meta}</span>
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="mt-empty-panel">
+            <strong>Semana despejada</strong>
+            <span>Planifica gym o running en Agenda para tenerlo siempre a mano.</span>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function AgendaScreen(props: {
+  snapshot: AppSnapshot;
+}) {
+  const selectedInitialDate =
+    props.snapshot.schedule.days.find((day) => day.isToday)?.isoDate ??
+    props.snapshot.schedule.days[0]?.isoDate ??
+    "";
+  const [selectedDate, setSelectedDate] = useState(selectedInitialDate);
+  const selectedDay =
+    props.snapshot.schedule.days.find((day) => day.isoDate === selectedDate) ??
+    props.snapshot.schedule.days[0];
+
+  return (
+    <div className="mt-screen">
+      <section className="mt-planner-card">
+        <div className="mt-planner-card__head">
+          <div>
+            <p className="mt-kicker">Agenda</p>
+            <h2>{props.snapshot.schedule.weekRangeLabel}</h2>
+          </div>
+          <span className="mt-chip mt-chip--ghost">
+            {selectedDay?.plannedCount ?? 0} eventos
+          </span>
+        </div>
+
+        <div className="mt-day-selector">
+          {props.snapshot.schedule.days.map((day) => (
+            <button
+              key={day.isoDate}
+              type="button"
+              className={cn("mt-day-pill", day.isoDate === selectedDate && "mt-day-pill--active")}
+              onClick={() => setSelectedDate(day.isoDate)}
+            >
+              <span>{day.dayShort}</span>
+              <strong>{day.dayNumber}</strong>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-planner-card__body">
+          <div className="mt-planner-card__dayhead">
+            <div>
+              <h3>{selectedDay?.dayLabel}</h3>
+              <p>
+                {selectedDay?.plannedCount ?? 0} planificados · {selectedDay?.completedCount ?? 0} registrados
+              </p>
+            </div>
+          </div>
+
+          {selectedDay && selectedDay.entries.length > 0 ? (
+            <div className="mt-planner-list">
+              {selectedDay.entries.map((entry) => (
+                <AgendaEntryCard key={entry.id} entry={entry} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-empty-panel">
+              <strong>Sin entrenos planificados</strong>
+              <span>Usa los bloques de abajo para fijar gym o running este dia.</span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-form-stack">
+        <ScheduleGymCard snapshot={props.snapshot} selectedDate={selectedDate} />
+        <ScheduleRunCard selectedDate={selectedDate} />
+        <RunLogCard selectedDate={selectedDate} />
+      </section>
+    </div>
+  );
+}
+
+function SummaryScreen(props: {
+  snapshot: AppSnapshot;
+}) {
+  const [mode, setMode] = useState<"general" | "body" | "running">("body");
+  const [scope, setScope] = useState<"week" | "month" | "total">("month");
+
+  return (
+    <div className="mt-screen">
+      <section className="mt-summary-card">
+        <div className="mt-summary-card__head">
+          <div>
+            <p className="mt-kicker">Analytics</p>
+            <h2>Resumen</h2>
+          </div>
+        </div>
+
+        <div className="mt-range-row">
+          <div className="mt-range-pill">
+            <CalendarDays size={15} strokeWidth={2.2} />
+            <span>{props.snapshot.schedule.weekRangeLabel}</span>
+          </div>
+          <div className="mt-range-pill mt-range-pill--ghost">
+            <Target size={15} strokeWidth={2.2} />
+            <span>{props.snapshot.goalLabel}</span>
+          </div>
+        </div>
+
+        <div className="mt-segmented">
+          {[
+            { key: "general", label: "General" },
+            { key: "body", label: "Body" },
+            { key: "running", label: "Running" },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={cn("mt-segmented__item", mode === item.key && "mt-segmented__item--active")}
+              onClick={() => setMode(item.key as "general" | "body" | "running")}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-scope-row">
+          {[
+            { key: "week", label: "Semana" },
+            { key: "month", label: "Mes" },
+            { key: "total", label: "Total" },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={cn("mt-scope-pill", scope === item.key && "mt-scope-pill--active")}
+              onClick={() => setScope(item.key as "week" | "month" | "total")}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {mode === "general" ? (
+          <div className="mt-summary-stack">
+            <div className="mt-summary-grid">
+              <SummaryMetricCard
+                icon={Dumbbell}
+                label="Gym"
+                metric={props.snapshot.summary.gym[scope]}
+                tone="violet"
+              />
+              <SummaryMetricCard
+                icon={Route}
+                label="Running"
+                metric={props.snapshot.summary.running[scope]}
+                tone="lime"
+              />
+            </div>
+
+            <section className="mt-activity-panel">
+              <div className="mt-panel-headline">
+                <h3>Actividad reciente</h3>
+              </div>
+              {props.snapshot.summary.recentActivity.length > 0 ? (
+                props.snapshot.summary.recentActivity.slice(0, 6).map((entry) => (
+                  <Link
+                    key={`${entry.kind}-${entry.id}`}
+                    href={entry.href ?? "/app"}
+                    className="mt-activity-row"
+                  >
+                    <span className={cn("mt-activity-row__icon", entry.kind === "workout" ? "mt-activity-row__icon--violet" : "mt-activity-row__icon--lime")}>
+                      {entry.kind === "workout" ? (
+                        <Dumbbell size={15} strokeWidth={2.2} />
+                      ) : (
+                        <Footprints size={15} strokeWidth={2.2} />
+                      )}
+                    </span>
+                    <div className="mt-activity-row__copy">
+                      <strong>{entry.title}</strong>
+                      <span>{entry.meta}</span>
+                    </div>
+                    <em>{entry.dateLabel}</em>
+                  </Link>
+                ))
+              ) : (
+                <div className="mt-empty-panel">
+                  <strong>Sin actividad todavia</strong>
+                  <span>Cuando guardes entrenos, el resumen empezara a cobrar vida.</span>
+                </div>
+              )}
+            </section>
+          </div>
+        ) : null}
+
+        {mode === "body" ? (
+          <div className="mt-summary-stack">
+            <section className="mt-body-analytics">
+              <div className="mt-body-analytics__art">
+                <Image
+                  src="/media/anatomy-mannequin.svg"
+                  alt="Anatomia muscular"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 44vw"
+                  className="mt-body-analytics__image"
+                />
+              </div>
+
+              <div className="mt-body-analytics__list">
+                {props.snapshot.summary.gymRecords.length > 0 ? (
+                  props.snapshot.summary.gymRecords.slice(0, 6).map((record) => (
+                    <button key={record.exerciseId} type="button" className="mt-body-analytics__row">
+                      <span>{record.exerciseName}</span>
+                      <strong>{record.weightLabel}</strong>
+                    </button>
+                  ))
+                ) : (
+                  <div className="mt-empty-panel">
+                    <strong>Sin records de gym</strong>
+                    <span>Empieza a registrar sets y apareceran tus mejores marcas.</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="mt-record-panel">
+              <div className="mt-panel-headline">
+                <h3>Records por ejercicio</h3>
+              </div>
+              {props.snapshot.summary.gymRecords.length > 0 ? (
+                props.snapshot.summary.gymRecords.map((record) => (
+                  <div key={record.exerciseId} className="mt-record-row">
+                    <div>
+                      <strong>{record.exerciseName}</strong>
+                      <span>{record.dateLabel}</span>
+                    </div>
+                    <em>{record.weightLabel}</em>
+                  </div>
+                ))
+              ) : (
+                <div className="mt-empty-panel">
+                  <strong>Sin records todavia</strong>
+                  <span>Tu serie mas pesada se guardara automaticamente por ejercicio.</span>
+                </div>
+              )}
+            </section>
+          </div>
+        ) : null}
+
+        {mode === "running" ? (
+          <div className="mt-summary-stack">
+            <section className="mt-running-panel">
+              <div className="mt-running-panel__ring">
+                <div className="mt-running-panel__ring-value">
+                  <span>Distancia top</span>
+                  <strong>{formatRunningLabel(props.snapshot.summary.runningRecords.longestDistance)}</strong>
+                </div>
+              </div>
+
+              <div className="mt-running-panel__records">
+                <RunningRecordRow label="Mejor ritmo 1 km" value={props.snapshot.summary.runningRecords.bestPace1k} />
+                <RunningRecordRow label="Mejor ritmo 5 km" value={props.snapshot.summary.runningRecords.bestPace5k} />
+                <RunningRecordRow label="Mejor ritmo 10 km" value={props.snapshot.summary.runningRecords.bestPace10k} />
+              </div>
+            </section>
+
+            <SummaryMetricCard
+              icon={Footprints}
+              label="Running"
+              metric={props.snapshot.summary.running[scope]}
+              tone="lime"
+            />
+          </div>
+        ) : null}
+      </section>
+    </div>
   );
 }
 
 function ProfileScreen(props: {
-  user: AuthUser;
   profile: UserProfile;
   snapshot: AppSnapshot;
 }) {
+  const metrics = [
+    props.profile.heightCm ? `${props.profile.heightCm} cm` : "--",
+    props.profile.weightKg ? `${props.profile.weightKg} kg` : "--",
+    `${props.snapshot.librarySummary.systemCount + props.snapshot.librarySummary.customCount} ejercicios`,
+  ];
+
   return (
-    <>
-      <SurfaceCard tone="accent" className="hero-card hero-card--compact">
-        <div className="profile-head">
-          <div className="profile-head__avatar">{props.user.initials}</div>
+    <div className="mt-screen">
+      <section className="mt-profile-card">
+        <div className="mt-profile-card__hero">
+          <div className="mt-profile-avatar">{props.profile.displayName.charAt(0)}</div>
           <div>
-            <p className="card-kicker">Mode Train</p>
-            <h2 className="compact-hero__title">{props.user.displayName}</h2>
-            <p className="profile-head__meta">{props.user.email}</p>
+            <p className="mt-kicker">Perfil</p>
+            <h2>{props.profile.displayName}</h2>
+            <span>{props.snapshot.goalLabel}</span>
           </div>
         </div>
-      </SurfaceCard>
 
-      <div className="stat-grid">
-        {props.snapshot.profileMetrics.map((item) => (
-          <SurfaceCard key={item.label} className="metric-tile">
-            <div className="metric-tile__head">
-              <span className="tile-label">{item.label}</span>
+        <div className="mt-profile-metrics">
+          {metrics.map((metric) => (
+            <div key={metric} className="mt-profile-metrics__item">
+              {metric}
             </div>
-            <p className="tile-value">{item.value}</p>
-          </SurfaceCard>
-        ))}
-      </div>
-
-      <ScreenSection icon={Trophy} title="Base">
-        <div className="list-stack">
-          <CompactRow label="Objetivo" value={translateGoal(props.profile.goal)} />
-          <CompactRow label="Nivel" value={translateLevel(props.profile.experienceLevel)} />
-          <CompactRow
-            label="Frecuencia"
-            value={`${props.profile.preferredWeeklySessions ?? 0} sesiones`}
-          />
+          ))}
         </div>
-      </ScreenSection>
 
-      <div className="profile-link-grid">
-        <Link href="/onboarding" className="ghost-button">
-          <PencilLine size={15} strokeWidth={2.3} />
-          Editar perfil
-        </Link>
-        <Link href="/app/history" className="ghost-button">
-          <History size={15} strokeWidth={2.3} />
-          Ver historial
-        </Link>
-        <Link href="/app/progress" className="ghost-button">
-          <TrendingUp size={15} strokeWidth={2.3} />
-          Ver progreso
-        </Link>
-      </div>
+        <div className="mt-profile-links">
+          <Link href="/onboarding" className="mt-mini-panel mt-mini-panel--link">
+            <div className="mt-mini-panel__icon">
+              <PencilLine size={18} strokeWidth={2.2} />
+            </div>
+            <div>
+              <p>Editar perfil</p>
+              <span>Ajusta tus datos base y tu objetivo</span>
+            </div>
+          </Link>
 
-      <form action="/logout" method="post">
-        <button type="submit" className="logout-button">
-          Cerrar sesion
-        </button>
-      </form>
-    </>
-  );
-}
+          <Link href="/app/routines" className="mt-mini-panel mt-mini-panel--link">
+            <div className="mt-mini-panel__icon">
+              <Sparkles size={18} strokeWidth={2.2} />
+            </div>
+            <div>
+              <p>Rutinas y ejercicios</p>
+              <span>Gestiona tus plantillas y tu pool personalizado</span>
+            </div>
+          </Link>
 
-function WeekStrip(props: { weeklyPlan: AppSnapshot["weeklyPlan"] }) {
-  return (
-    <div className="week-strip">
-      {weekOrder.map((day) => {
-        const entry = props.weeklyPlan.find((item) => item.dayKey === day.key);
-        const toneClass =
-          entry?.kind === "run"
-            ? "week-strip__ring--cyan"
-            : entry
-              ? "week-strip__ring--pink"
-              : "week-strip__ring--idle";
-
-        return (
-          <div
-            key={day.key}
-            className={cn(
-              "week-strip__day",
-              entry && "week-strip__day--filled",
-              entry?.kind === "run" && "week-strip__day--run",
-            )}
-          >
-            <span className={cn("week-strip__ring", toneClass)}>
-              <span className="week-strip__ring-core" />
-            </span>
-            <small>{day.shortLabel}</small>
-          </div>
-        );
-      })}
+          <Link href="/logout" className="mt-secondary-pill mt-secondary-pill--block">
+            Cerrar sesion
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
 
-function OrbitMetric(props: {
-  label: string;
-  value: string;
-  note: string;
-  progress: number;
-  tone: "violet" | "lime" | "cyan" | "pink";
-  compact?: boolean;
-}) {
-  const radius = props.compact ? 19 : 24;
-  const strokeWidth = props.compact ? 5 : 6;
-  const circumference = 2 * Math.PI * radius;
-  const clampedProgress = Math.max(8, Math.min(100, props.progress));
-  const dashOffset = circumference * (1 - clampedProgress / 100);
-  const boxSize = props.compact ? 48 : 62;
-  const center = boxSize / 2;
-
-  return (
-    <div className={cn("orbit-metric", props.compact && "orbit-metric--compact")}>
-      <div className="orbit-metric__ring">
-        <svg viewBox={`0 0 ${boxSize} ${boxSize}`} aria-hidden>
-          <circle
-            className="orbit-metric__track"
-            cx={center}
-            cy={center}
-            r={radius}
-            strokeWidth={strokeWidth}
-          />
-          <motion.circle
-            className={cn("orbit-metric__value", `orbit-metric__value--${props.tone}`)}
-            cx={center}
-            cy={center}
-            r={radius}
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference * 0.84 }}
-            animate={{ strokeDashoffset: dashOffset }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          />
-        </svg>
-        <div className="orbit-metric__center">
-          <strong>{props.value}</strong>
-        </div>
-      </div>
-      <div className="orbit-metric__copy">
-        <span>{props.label}</span>
-        <small>{props.note}</small>
-      </div>
-    </div>
-  );
-}
-
-function SurfaceCard(props: {
-  children: React.ReactNode;
-  className?: string;
-  tone?: "default" | "accent";
+function AgendaEntryCard(props: {
+  entry: AppSnapshot["schedule"]["todayEntries"][number];
 }) {
   return (
-    <motion.section
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.18 }}
-      className={cn(
-        "surface-card",
-        props.tone === "accent" && "surface-card--accent",
-        props.className,
-      )}
-    >
-      {props.children}
-    </motion.section>
-  );
-}
-
-function ScreenSection(props: {
-  icon: LucideIcon;
-  title: string;
-  children: React.ReactNode;
-}) {
-  const Icon = props.icon;
-
-  return (
-    <section className="section-stack">
-      <div className="section-head">
-        <div className="section-head__title">
-          <span className="section-head__icon">
-            <Icon size={15} strokeWidth={2.2} />
-          </span>
-          <span>{props.title}</span>
-        </div>
-      </div>
-      {props.children}
-    </section>
-  );
-}
-
-function MetricTile(props: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-}) {
-  const Icon = props.icon;
-
-  return (
-    <SurfaceCard className="metric-tile">
-      <div className="metric-tile__head">
-        <span className="metric-tile__icon">
-          <Icon size={15} strokeWidth={2.2} />
+    <article className="mt-schedule-entry">
+      <div className="mt-schedule-entry__main">
+        <span className={cn("mt-schedule-entry__icon", props.entry.entryType === "gym" ? "mt-schedule-entry__icon--violet" : "mt-schedule-entry__icon--lime")}>
+          {props.entry.entryType === "gym" ? (
+            <Dumbbell size={16} strokeWidth={2.2} />
+          ) : (
+            <Footprints size={16} strokeWidth={2.2} />
+          )}
         </span>
-        <span className="tile-label">{props.label}</span>
-      </div>
-      <p className="tile-value">{props.value}</p>
-    </SurfaceCard>
-  );
-}
-
-function RowCard(props: { icon: LucideIcon; title: string; meta: string }) {
-  const Icon = props.icon;
-
-  return (
-    <div className="row-card">
-      <span className="row-card__icon">
-        <Icon size={16} strokeWidth={2.2} />
-      </span>
-      <span className="row-card__copy">
-        <span className="row-card__title">{props.title}</span>
-        <span className="row-card__meta">{props.meta}</span>
-      </span>
-    </div>
-  );
-}
-
-function InsightLinkCard(props: {
-  href: string;
-  icon: LucideIcon;
-  title: string;
-  body: string;
-}) {
-  const Icon = props.icon;
-
-  return (
-    <Link
-      href={props.href}
-      className="history-entry insight-link-card"
-        aria-label={
-        props.title === "Historial"
-          ? "Ver registro detallado"
-          : props.title === "Progreso"
-            ? "Ver evolucion detallada"
-            : props.title
-      }
-    >
-      <div className="history-entry__main">
-        <span className="history-entry__icon">
-          <Icon size={16} strokeWidth={2.2} />
-        </span>
-        <div className="history-entry__copy">
-          <p className="row-card__title">{props.title}</p>
-          <p className="row-card__meta">{props.body}</p>
+        <div>
+          <strong>{props.entry.title}</strong>
+          <span>{props.entry.meta}</span>
         </div>
       </div>
-      <ChevronRight size={16} strokeWidth={2.2} className="history-entry__chevron" />
-    </Link>
-  );
-}
 
-function ActiveWorkoutCard(props: {
-  summary: NonNullable<AppSnapshot["activeWorkoutSummary"]>;
-  compact?: boolean;
-}) {
-  return (
-    <SurfaceCard className={cn("active-workout-card", props.compact && "active-workout-card--compact")}>
-      <div className="active-workout-card__copy">
-        <p className="card-kicker">Sesion activa</p>
-        <h3 className="compact-hero__title">{props.summary.routineName}</h3>
-        <p className="row-card__meta">
-          {props.summary.completedExercises}/{props.summary.totalExercises} ejercicios ·{" "}
-          {props.summary.savedSets} sets
-        </p>
-      </div>
-
-      <Link href={`/app/workouts/${props.summary.sessionId}`} className="secondary-button">
-        <Play size={15} strokeWidth={2.3} />
-        Reanudar
-      </Link>
-    </SurfaceCard>
-  );
-}
-
-function FeedCard(props: {
-  name: string;
-  title: string;
-  value: string;
-  tint: "cyan" | "violet" | "pink";
-}) {
-  return (
-    <SurfaceCard className="feed-card">
-      <div className={cn("mini-avatar", `mini-avatar--${props.tint}`)}>{props.name[0]}</div>
-      <div className="feed-card__copy">
-        <p>{props.name}</p>
-        <span>{props.title}</span>
-      </div>
-      <span className="pill-soft">{props.value}</span>
-    </SurfaceCard>
-  );
-}
-
-function ProgramShowcaseCard(props: {
-  program: (typeof featuredPrograms)[number];
-  actionLabel: string;
-  compact?: boolean;
-}) {
-  return (
-    <article
-      className={cn(
-        "program-showcase-card",
-        props.compact && "program-showcase-card--compact",
-      )}
-    >
-      <div className="program-showcase-card__media">
-        <Image
-          src={props.program.imageSrc}
-          alt={props.program.title}
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="program-showcase-card__image"
-          style={{ objectPosition: props.program.imagePosition }}
-        />
-      </div>
-
-      <div className="program-showcase-card__overlay" />
-
-      <div className="program-showcase-card__content">
-        <div className="program-showcase-card__head">
-          <span
-            className={cn(
-              "program-showcase-card__pill",
-              `program-showcase-card__pill--${props.program.accent}`,
-            )}
-          >
-            {props.program.difficulty}
-          </span>
-          <span className="program-showcase-card__meta">{props.program.duration}</span>
-        </div>
-
-        <div className="program-showcase-card__copy">
-          <span className="program-showcase-card__eyebrow">Bloque curado</span>
-          <h3>{props.program.title}</h3>
-          <p>{props.program.body}</p>
-        </div>
-
-        <div className="program-showcase-card__footer">
-          <button type="button" className="program-showcase-card__action">
-            <span className="program-showcase-card__play" />
-            {props.actionLabel}
-          </button>
-          <span className="program-showcase-card__progress">{props.program.progress}</span>
-        </div>
+      <div className="mt-schedule-entry__actions">
+        {props.entry.entryType === "gym" && props.entry.routineTemplateId ? (
+          <StartWorkoutButton
+            routineTemplateId={props.entry.routineTemplateId}
+            label="Abrir"
+            className="mt-inline-button"
+          />
+        ) : null}
+        <DeleteScheduleEntryButton entryId={props.entry.id} />
       </div>
     </article>
   );
 }
 
-function CompactRow(props: { label: string; value: string }) {
+function ScheduleGymCard(props: {
+  snapshot: AppSnapshot;
+  selectedDate: string;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState(createScheduleEntryAction, initialScheduleState);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!state.success) {
+      return;
+    }
+
+    formRef.current?.reset();
+    router.refresh();
+  }, [router, state.success]);
+
   return (
-    <SurfaceCard className="compact-row">
-      <span className="tile-label">{props.label}</span>
-      <span className="row-card__title">{props.value}</span>
-    </SurfaceCard>
+    <section className="mt-form-card">
+      <div className="mt-form-card__head">
+        <div>
+          <p className="mt-kicker">Planificar</p>
+          <h3>Gym</h3>
+        </div>
+        <span className="mt-chip mt-chip--violet">Rutina</span>
+      </div>
+
+      <form ref={formRef} action={formAction} className="mt-form-grid">
+        <input type="hidden" name="entryType" value="gym" />
+
+        <label className="mt-field">
+          <span>Fecha</span>
+          <input type="date" name="scheduledDate" defaultValue={props.selectedDate} required />
+        </label>
+
+        <label className="mt-field">
+          <span>Rutina</span>
+          <select
+            name="routineTemplateId"
+            defaultValue={props.snapshot.defaultRoutine?.id ?? props.snapshot.routines[0]?.id ?? ""}
+            required
+          >
+            {props.snapshot.routines.length > 0 ? (
+              props.snapshot.routines.map((routine) => (
+                <option key={routine.id} value={routine.id}>
+                  {routine.name}
+                </option>
+              ))
+            ) : (
+              <option value="">No hay rutinas</option>
+            )}
+          </select>
+        </label>
+
+        <label className="mt-field mt-field--full">
+          <span>Nota</span>
+          <input type="text" name="notes" placeholder="Opcional" />
+        </label>
+
+        <PlannerSubmitButton
+          disabled={props.snapshot.routines.length === 0}
+          className="mt-action-button mt-action-button--violet"
+          label="Guardar en agenda"
+        />
+      </form>
+
+      {state.error ? <p className="mt-form-feedback mt-form-feedback--error">{state.error}</p> : null}
+      {state.success ? <p className="mt-form-feedback">{state.success}</p> : null}
+    </section>
   );
 }
 
-function EmptyCard(props: { title: string; body: string }) {
+function ScheduleRunCard(props: {
+  selectedDate: string;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState(createScheduleEntryAction, initialScheduleState);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!state.success) {
+      return;
+    }
+
+    formRef.current?.reset();
+    router.refresh();
+  }, [router, state.success]);
+
   return (
-    <SurfaceCard className="empty-card">
-      <p className="row-card__title">{props.title}</p>
-      <p className="row-card__meta">{props.body}</p>
-    </SurfaceCard>
+    <section className="mt-form-card">
+      <div className="mt-form-card__head">
+        <div>
+          <p className="mt-kicker">Planificar</p>
+          <h3>Running</h3>
+        </div>
+        <span className="mt-chip mt-chip--lime">Libre o con objetivo</span>
+      </div>
+
+      <form ref={formRef} action={formAction} className="mt-form-grid">
+        <input type="hidden" name="entryType" value="running" />
+
+        <label className="mt-field">
+          <span>Fecha</span>
+          <input type="date" name="scheduledDate" defaultValue={props.selectedDate} required />
+        </label>
+
+        <label className="mt-field">
+          <span>Tipo</span>
+          <select name="runningKind" defaultValue="free">
+            <option value="free">Libre</option>
+            <option value="easy">Rodaje suave</option>
+            <option value="tempo">Tempo</option>
+            <option value="intervals">Series</option>
+            <option value="long_run">Tirada larga</option>
+            <option value="recovery">Recuperacion</option>
+          </select>
+        </label>
+
+        <label className="mt-field">
+          <span>Nombre</span>
+          <input type="text" name="title" placeholder="Correr, rodaje, tempo..." />
+        </label>
+
+        <label className="mt-field">
+          <span>Km objetivo</span>
+          <input type="number" name="runningTargetKm" min="0.5" max="250" step="0.1" placeholder="Opcional" />
+        </label>
+
+        <label className="mt-field mt-field--full">
+          <span>Nota</span>
+          <input type="text" name="notes" placeholder="Opcional" />
+        </label>
+
+        <PlannerSubmitButton
+          className="mt-action-button mt-action-button--lime"
+          label="Guardar running"
+        />
+      </form>
+
+      {state.error ? <p className="mt-form-feedback mt-form-feedback--error">{state.error}</p> : null}
+      {state.success ? <p className="mt-form-feedback">{state.success}</p> : null}
+    </section>
+  );
+}
+
+function RunLogCard(props: {
+  selectedDate: string;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState(logRunningSessionAction, initialRunState);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!state.success) {
+      return;
+    }
+
+    formRef.current?.reset();
+    router.refresh();
+  }, [router, state.success]);
+
+  return (
+    <section className="mt-form-card">
+      <div className="mt-form-card__head">
+        <div>
+          <p className="mt-kicker">Registrar</p>
+          <h3>Carrera hecha</h3>
+        </div>
+        <span className="mt-chip mt-chip--ghost">Manual</span>
+      </div>
+
+      <form ref={formRef} action={formAction} className="mt-form-grid">
+        <label className="mt-field">
+          <span>Fecha</span>
+          <input type="date" name="date" defaultValue={props.selectedDate} required />
+        </label>
+
+        <label className="mt-field">
+          <span>Tipo</span>
+          <select name="kind" defaultValue="free">
+            <option value="free">Libre</option>
+            <option value="easy">Rodaje suave</option>
+            <option value="tempo">Tempo</option>
+            <option value="intervals">Series</option>
+            <option value="long_run">Tirada larga</option>
+            <option value="recovery">Recuperacion</option>
+          </select>
+        </label>
+
+        <label className="mt-field">
+          <span>Km</span>
+          <input type="number" name="distanceKm" min="0.5" max="250" step="0.1" placeholder="Opcional" />
+        </label>
+
+        <label className="mt-field">
+          <span>Minutos</span>
+          <input type="number" name="durationMinutes" min="1" max="1440" step="1" placeholder="Opcional" />
+        </label>
+
+        <label className="mt-field mt-field--full">
+          <span>Nota</span>
+          <input type="text" name="notes" placeholder="Sensaciones, terreno, etc." />
+        </label>
+
+        <RunSubmitButton className="mt-action-button mt-action-button--ghost" />
+      </form>
+
+      {state.error ? <p className="mt-form-feedback mt-form-feedback--error">{state.error}</p> : null}
+      {state.success ? <p className="mt-form-feedback">{state.success}</p> : null}
+    </section>
+  );
+}
+
+function DeleteScheduleEntryButton(props: {
+  entryId: string;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState(deleteScheduleEntryAction, initialScheduleState);
+
+  useEffect(() => {
+    if (!state.success) {
+      return;
+    }
+
+    router.refresh();
+  }, [router, state.success]);
+
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="entryId" value={props.entryId} />
+      <DeleteScheduleSubmit />
+    </form>
+  );
+}
+
+function DeleteScheduleSubmit() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" className="mt-icon-button" disabled={pending} aria-label="Eliminar">
+      <Trash2 size={14} strokeWidth={2.2} />
+    </button>
+  );
+}
+
+function PlannerSubmitButton(props: {
+  className: string;
+  label: string;
+  disabled?: boolean;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" className={props.className} disabled={pending || props.disabled}>
+      <CirclePlus size={16} strokeWidth={2.3} />
+      {pending ? "Guardando..." : props.label}
+    </button>
+  );
+}
+
+function RunSubmitButton(props: {
+  className: string;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" className={props.className} disabled={pending}>
+      <Route size={16} strokeWidth={2.3} />
+      {pending ? "Guardando..." : "Guardar carrera"}
+    </button>
+  );
+}
+
+function RingMetric(props: {
+  metric: AppSnapshot["focusMetrics"][number];
+}) {
+  const progress = useMemo(() => {
+    if (props.metric.key === "running") {
+      const parsed = Number(String(props.metric.value).replace(/[^\d.]/g, ""));
+      return Math.min(0.92, Math.max(0.18, parsed / 40));
+    }
+
+    const parsed = Number(String(props.metric.value).replace(/[^\d.]/g, ""));
+    return Math.min(0.92, Math.max(0.16, parsed / 10));
+  }, [props.metric.key, props.metric.value]);
+
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - progress);
+
+  return (
+    <div className="mt-ring-card">
+      <svg viewBox="0 0 100 100" className="mt-ring-card__chart" aria-hidden="true">
+        <circle cx="50" cy="50" r={radius} className="mt-ring-card__track" />
+        <circle
+          cx="50"
+          cy="50"
+          r={radius}
+          className={cn("mt-ring-card__progress", `mt-ring-card__progress--${props.metric.tone}`)}
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+        />
+      </svg>
+      <div className="mt-ring-card__copy">
+        <strong>{props.metric.value}</strong>
+        <span>{props.metric.label}</span>
+        <em>{formatMetricCaption(props.metric.key)}</em>
+      </div>
+    </div>
+  );
+}
+
+function SummaryMetricCard(props: {
+  icon: LucideIcon;
+  label: string;
+  metric: AppSnapshot["summary"]["gym"]["week"];
+  tone: "violet" | "lime";
+}) {
+  const Icon = props.icon;
+
+  return (
+    <section className={cn("mt-metric-card", `mt-metric-card--${props.tone}`)}>
+      <div className="mt-metric-card__head">
+        <span className="mt-metric-card__icon">
+          <Icon size={17} strokeWidth={2.2} />
+        </span>
+        <strong>{props.label}</strong>
+      </div>
+
+      <div className="mt-metric-card__body">
+        <h3>{props.metric.sessions}</h3>
+        <p>{props.metric.support}</p>
+      </div>
+
+      <div className="mt-metric-card__foot">{props.metric.highlight}</div>
+    </section>
+  );
+}
+
+function RunningRecordRow(props: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="mt-record-row">
+      <div>
+        <strong>{props.label}</strong>
+      </div>
+      <em>{formatRunningLabel(props.value)}</em>
+    </div>
   );
 }
 
 function Backdrop() {
   return (
-    <div aria-hidden className="app-backdrop">
+    <div className="app-backdrop">
       <div className="app-backdrop__grid" />
       <div className="app-backdrop__orb app-backdrop__orb--left" />
       <div className="app-backdrop__orb app-backdrop__orb--right" />

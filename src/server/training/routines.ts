@@ -6,6 +6,7 @@ import {
   exercises,
   routineTemplateItems,
   routineTemplates,
+  trainingScheduleEntries,
 } from "@/server/db/schema";
 
 export type RoutineItemDetail = {
@@ -40,6 +41,22 @@ export type RoutineEditorData = {
     updatedAt: Date;
   };
   items: RoutineItemDetail[];
+  availableExercises: LibraryExerciseOption[];
+};
+
+export type RoutinesHubData = {
+  routines: Array<{
+    id: string;
+    name: string;
+    notes: string;
+    itemCount: number;
+    updatedAt: Date;
+    latestScheduledDate: string | null;
+  }>;
+  librarySummary: {
+    systemCount: number;
+    customCount: number;
+  };
   availableExercises: LibraryExerciseOption[];
 };
 
@@ -231,4 +248,78 @@ export async function getLatestOwnedRoutine(userId: string) {
     .limit(1);
 
   return routine ?? null;
+}
+
+export async function getRoutinesHubData(userId: string): Promise<RoutinesHubData> {
+  const db = getDb();
+
+  const routines = await db
+    .select({
+      id: routineTemplates.id,
+      name: routineTemplates.name,
+      notes: routineTemplates.notes,
+      updatedAt: routineTemplates.updatedAt,
+      itemCount: sql<number>`count(${routineTemplateItems.id})`,
+      latestScheduledDate: sql<string | null>`max(${trainingScheduleEntries.scheduledDate})`,
+    })
+    .from(routineTemplates)
+    .leftJoin(
+      routineTemplateItems,
+      eq(routineTemplateItems.routineTemplateId, routineTemplates.id),
+    )
+    .leftJoin(
+      trainingScheduleEntries,
+      eq(trainingScheduleEntries.routineTemplateId, routineTemplates.id),
+    )
+    .where(eq(routineTemplates.ownerUserId, userId))
+    .groupBy(
+      routineTemplates.id,
+      routineTemplates.name,
+      routineTemplates.notes,
+      routineTemplates.updatedAt,
+    )
+    .orderBy(desc(routineTemplates.updatedAt));
+
+  const [systemCountRow] = await db
+    .select({
+      count: sql<number>`count(*)`,
+    })
+    .from(exercises)
+    .where(eq(exercises.isSystem, true));
+
+  const [customCountRow] = await db
+    .select({
+      count: sql<number>`count(*)`,
+    })
+    .from(exercises)
+    .where(and(eq(exercises.ownerUserId, userId), eq(exercises.isSystem, false)));
+
+  const availableExercises = await db
+    .select({
+      id: exercises.id,
+      name: exercises.name,
+      primaryMuscleGroup: exercises.primaryMuscleGroup,
+      equipment: exercises.equipment,
+    })
+    .from(exercises)
+    .where(or(eq(exercises.isSystem, true), eq(exercises.ownerUserId, userId)))
+    .orderBy(asc(exercises.name));
+
+  return {
+    routines: routines.map((routine) => ({
+      ...routine,
+      itemCount: Number(routine.itemCount ?? 0),
+      latestScheduledDate: routine.latestScheduledDate ?? null,
+    })),
+    librarySummary: {
+      systemCount: Number(systemCountRow?.count ?? 0),
+      customCount: Number(customCountRow?.count ?? 0),
+    },
+    availableExercises: availableExercises.map((exercise) => ({
+      id: exercise.id,
+      name: exercise.name,
+      primaryMuscleGroup: exercise.primaryMuscleGroup || "General",
+      equipment: exercise.equipment || "Mixto",
+    })),
+  };
 }

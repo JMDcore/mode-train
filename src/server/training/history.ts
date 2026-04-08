@@ -280,7 +280,7 @@ export async function getHistoryOverview(userId: string): Promise<HistoryOvervie
     ...runs.map((run) => ({
       id: run.id,
       kind: "run" as const,
-      title: `${run.distanceKm.toFixed(1)} km`,
+      title: run.distanceKm !== null ? `${run.distanceKm.toFixed(1)} km` : "Running libre",
       meta: [formatRunningKind(run.kind), formatPace(run.averagePaceSeconds)]
         .filter(Boolean)
         .join(" · "),

@@ -1,80 +1,40 @@
-import { and, count, desc, eq, or } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 
-import type { AuthUser } from "@/server/auth/user";
 import type { UserProfile } from "@/server/profile";
+import type { AuthUser } from "@/server/auth/user";
 import { getDb } from "@/server/db";
-import {
-  exerciseCategories,
-  exercises,
-  friendshipStatusEnum,
-  friendships,
-  notifications,
-  runningSessions,
-  routineTemplateItems,
-  routineTemplates,
-  weeklyPlanEntries,
-  workoutSessions,
-} from "@/server/db/schema";
-import { compareWeekdayOrder, getWeekdayShortLabel } from "@/server/training/week";
+import { exercises, routineTemplateItems, routineTemplates } from "@/server/db/schema";
+import { getScheduleOverview, type ScheduleOverview } from "@/server/training/schedule";
+import { getSummaryOverview, type SummaryOverview } from "@/server/training/summary";
 import { getActiveWorkoutSummary, type ActiveWorkoutSummary } from "@/server/training/workouts";
 
 export type AppSnapshot = {
-  readiness: number;
-  canGenerateStarterWeek: boolean;
+  dateLabel: string;
+  firstName: string;
+  levelLabel: string;
+  goalLabel: string;
   activeWorkoutSummary: ActiveWorkoutSummary | null;
-  heroChip: string;
-  heroTitle: string;
-  heroMeta: string[];
-  quickStats: Array<{
-    key: "goal" | "routines" | "library";
+  defaultRoutine: {
+    id: string;
+    name: string;
+  } | null;
+  focusMetrics: Array<{
+    key: "gym" | "running" | "routines";
     label: string;
     value: string;
+    tone: "pink" | "lime" | "cyan";
   }>;
-  todayItems: Array<{
-    title: string;
-    meta: string;
-    kind: "routine" | "run" | "library";
-  }>;
-  recentActivity: Array<{
-    id: string;
-    title: string;
-    meta: string;
-    kind: "routine" | "run";
-  }>;
-  weeklyPlan: Array<{
-    id: string;
-    dayKey: string;
-    dayLabel: string;
-    title: string;
-    meta: string;
-    kind: "routine" | "run";
-  }>;
-  socialPreview: Array<{
-    name: string;
-    caption: string;
-    value: string;
-    tint: "violet" | "cyan" | "pink";
-  }>;
+  schedule: ScheduleOverview;
   routines: Array<{
     id: string;
     name: string;
     itemCount: number;
   }>;
-  library: Array<{
-    id: string;
-    name: string;
-    primaryMuscleGroup: string;
-    equipment: string;
-  }>;
-  socialCounts: {
-    friends: number;
-    pending: number;
-    notifications: number;
+  librarySummary: {
+    systemCount: number;
+    customCount: number;
   };
-  profileMetrics: Array<{
-    label: string;
-    value: string;
-  }>;
+  summary: SummaryOverview;
 };
 
 function normalizeText(value: string) {
@@ -85,122 +45,58 @@ function normalizeText(value: string) {
     .replace(/\p{Diacritic}/gu, "");
 }
 
+function formatLevel(level: string) {
+  const normalized = normalizeText(level);
+
+  if (normalized.includes("principiante") || normalized.includes("beginner")) {
+    return "Principiante";
+  }
+
+  if (normalized.includes("intermedio") || normalized.includes("intermediate")) {
+    return "Intermedio";
+  }
+
+  if (normalized.includes("avanzado") || normalized.includes("advanced")) {
+    return "Avanzado";
+  }
+
+  return level || "Base";
+}
+
 function formatGoal(goal: string) {
   const normalized = normalizeText(goal);
 
-  if (!normalized) {
-    return "Personal";
-  }
-
   if (normalized.includes("musculo") || normalized.includes("muscle")) {
-    return "Musculo";
+    return "Ganar musculo";
   }
 
   if (normalized.includes("grasa") || normalized.includes("fat")) {
-    return "Definicion";
+    return "Perder grasa";
   }
 
   if (normalized.includes("fuerte") || normalized.includes("strong")) {
-    return "Fuerza";
+    return "Mejorar fuerza";
   }
 
   if (normalized.includes("hibrid")) {
     return "Hibrido";
   }
 
-  if (normalized.includes("consisten")) {
-    return "Constancia";
-  }
-
-  return goal.trim();
+  return goal || "Modo personal";
 }
 
-function formatExperienceLevel(level: string) {
-  const normalized = normalizeText(level);
-
-  if (!normalized) {
-    return "--";
-  }
-
-  if (normalized.includes("beginner") || normalized.includes("principiante")) {
-    return "Principiante";
-  }
-
-  if (normalized.includes("intermediate") || normalized.includes("intermedio")) {
-    return "Intermedio";
-  }
-
-  if (normalized.includes("advanced") || normalized.includes("avanzado")) {
-    return "Avanzado";
-  }
-
-  return level.trim();
+function extractFirstName(value: string) {
+  return value.trim().split(/\s+/)[0] ?? value;
 }
 
-function formatActivityDate(date: Date) {
-  return new Intl.DateTimeFormat("es-ES", {
+function formatDateLabel() {
+  const value = new Intl.DateTimeFormat("es-ES", {
+    weekday: "short",
     day: "numeric",
-    month: "short",
-  }).format(date);
-}
+    month: "long",
+  }).format(new Date());
 
-function formatRunningKind(kind: string) {
-  switch (kind) {
-    case "easy":
-      return "Rodaje suave";
-    case "tempo":
-      return "Tempo";
-    case "intervals":
-      return "Series";
-    case "long_run":
-      return "Tirada larga";
-    case "recovery":
-      return "Recuperacion";
-    default:
-      return "Libre";
-  }
-}
-
-function formatMuscleGroup(group: string) {
-  switch (normalizeText(group)) {
-    case "chest":
-      return "Pecho";
-    case "back":
-      return "Espalda";
-    case "shoulders":
-      return "Hombros";
-    case "legs":
-      return "Pierna";
-    case "hamstrings":
-      return "Isquios";
-    case "glutes":
-      return "Gluteo";
-    case "cardio":
-      return "Cardio";
-    case "core":
-      return "Core";
-    default:
-      return group || "General";
-  }
-}
-
-function formatEquipment(equipment: string) {
-  switch (normalizeText(equipment)) {
-    case "barbell":
-      return "Barra";
-    case "dumbbells":
-      return "Mancuernas";
-    case "machine":
-      return "Maquina";
-    case "bodyweight":
-      return "Peso corporal";
-    case "cable":
-      return "Cable";
-    case "shoes":
-      return "Zapatillas";
-    default:
-      return equipment || "Mixto";
-  }
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export async function getAppSnapshot(params: {
@@ -209,321 +105,101 @@ export async function getAppSnapshot(params: {
 }): Promise<AppSnapshot> {
   const db = getDb();
   const { user, profile } = params;
-  const activeWorkoutSummary = await getActiveWorkoutSummary(user.id);
 
-  const [routineCountRow] = await db
-    .select({ count: count() })
-    .from(routineTemplates)
-    .where(eq(routineTemplates.ownerUserId, user.id));
+  const [
+    activeWorkoutSummary,
+    schedule,
+    summary,
+    routines,
+    systemExerciseCountRow,
+    customExerciseCountRow,
+  ] = await Promise.all([
+    getActiveWorkoutSummary(user.id),
+    getScheduleOverview(user.id),
+    getSummaryOverview(user.id),
+    db
+      .select({
+        id: routineTemplates.id,
+        name: routineTemplates.name,
+        itemCount: count(routineTemplateItems.id),
+      })
+      .from(routineTemplates)
+      .leftJoin(
+        routineTemplateItems,
+        eq(routineTemplateItems.routineTemplateId, routineTemplates.id),
+      )
+      .where(eq(routineTemplates.ownerUserId, user.id))
+      .groupBy(routineTemplates.id, routineTemplates.name)
+      .orderBy(desc(routineTemplates.updatedAt), asc(routineTemplates.name))
+      .limit(8),
+    db
+      .select({ count: count() })
+      .from(exercises)
+      .where(eq(exercises.isSystem, true))
+      .then((rows) => rows[0]),
+    db
+      .select({ count: count() })
+      .from(exercises)
+      .where(and(eq(exercises.ownerUserId, user.id), eq(exercises.isSystem, false)))
+      .then((rows) => rows[0]),
+  ]);
 
-  const [planCountRow] = await db
-    .select({ count: count() })
-    .from(weeklyPlanEntries)
-    .where(eq(weeklyPlanEntries.userId, user.id));
+  const todayScheduledGym =
+    schedule.todayEntries.find((entry) => entry.entryType === "gym" && entry.routineTemplateId) ??
+    null;
 
-  const [libraryCountRow] = await db
-    .select({ count: count() })
-    .from(exercises)
-    .where(or(eq(exercises.isSystem, true), eq(exercises.ownerUserId, user.id)));
+  const fallbackRoutine = routines[0] ?? null;
 
-  const [friendCountRow] = await db
-    .select({ count: count() })
-    .from(friendships)
-    .where(
-      and(
-        eq(friendships.status, friendshipStatusEnum.enumValues[1]),
-        or(
-          eq(friendships.requesterUserId, user.id),
-          eq(friendships.addresseeUserId, user.id),
-        ),
-      ),
-    );
-
-  const [pendingCountRow] = await db
-    .select({ count: count() })
-    .from(friendships)
-    .where(
-      and(
-        eq(friendships.status, friendshipStatusEnum.enumValues[0]),
-        eq(friendships.addresseeUserId, user.id),
-      ),
-    );
-
-  const [notificationCountRow] = await db
-    .select({ count: count() })
-    .from(notifications)
-    .where(eq(notifications.userId, user.id));
-
-  const routines = await db
-    .select({
-      id: routineTemplates.id,
-      name: routineTemplates.name,
-      itemCount: count(routineTemplateItems.id),
-    })
-    .from(routineTemplates)
-    .leftJoin(
-      routineTemplateItems,
-      eq(routineTemplateItems.routineTemplateId, routineTemplates.id),
-    )
-    .where(eq(routineTemplates.ownerUserId, user.id))
-    .groupBy(routineTemplates.id)
-    .orderBy(desc(routineTemplates.createdAt))
-    .limit(4);
-
-  const weeklyPlan = await db
-    .select({
-      id: weeklyPlanEntries.id,
-      weekdayKey: weeklyPlanEntries.weekdayKey,
-      runningTargetKm: weeklyPlanEntries.runningTargetKm,
-      routineId: routineTemplates.id,
-      routineName: routineTemplates.name,
-      routineItemCount: count(routineTemplateItems.id),
-    })
-    .from(weeklyPlanEntries)
-    .leftJoin(routineTemplates, eq(routineTemplates.id, weeklyPlanEntries.routineTemplateId))
-    .leftJoin(
-      routineTemplateItems,
-      eq(routineTemplateItems.routineTemplateId, routineTemplates.id),
-    )
-    .where(eq(weeklyPlanEntries.userId, user.id))
-    .groupBy(weeklyPlanEntries.id, routineTemplates.id)
-    .limit(7);
-
-  const recentWorkouts = await db
-    .select({
-      id: workoutSessions.id,
-      date: workoutSessions.finishedAt,
-      fallbackDate: workoutSessions.startedAt,
-      routineName: routineTemplates.name,
-    })
-    .from(workoutSessions)
-    .leftJoin(routineTemplates, eq(routineTemplates.id, workoutSessions.routineTemplateId))
-    .where(eq(workoutSessions.userId, user.id))
-    .orderBy(desc(workoutSessions.startedAt))
-    .limit(4);
-
-  const recentRuns = await db
-    .select({
-      id: runningSessions.id,
-      date: runningSessions.date,
-      distanceKm: runningSessions.distanceKm,
-      kind: runningSessions.kind,
-    })
-    .from(runningSessions)
-    .where(eq(runningSessions.userId, user.id))
-    .orderBy(desc(runningSessions.date))
-    .limit(4);
-
-  const library = await db
-    .select({
-      id: exercises.id,
-      name: exercises.name,
-      primaryMuscleGroup: exercises.primaryMuscleGroup,
-      equipment: exercises.equipment,
-      categoryName: exerciseCategories.name,
-    })
-    .from(exercises)
-    .leftJoin(exerciseCategories, eq(exerciseCategories.id, exercises.categoryId))
-    .where(or(eq(exercises.isSystem, true), eq(exercises.ownerUserId, user.id)))
-    .limit(6);
-
-  const routineCount = Number(routineCountRow?.count ?? 0);
-  const planCount = Number(planCountRow?.count ?? 0);
-  const libraryCount = Number(libraryCountRow?.count ?? 0);
-  const friendCount = Number(friendCountRow?.count ?? 0);
-  const pendingCount = Number(pendingCountRow?.count ?? 0);
-  const notificationCount = Number(notificationCountRow?.count ?? 0);
-  const orderedWeeklyPlan = weeklyPlan
-    .map((entry) => ({
-      id: entry.id,
-      dayKey: entry.weekdayKey,
-      dayLabel: getWeekdayShortLabel(entry.weekdayKey),
-      title: entry.routineName ?? "Objetivo run",
-      meta:
-        entry.routineName && entry.routineId
-          ? `${Number(entry.routineItemCount)} ejercicios`
-          : `${entry.runningTargetKm ?? 0} km objetivo`,
-      kind: entry.routineId ? ("routine" as const) : ("run" as const),
-    }))
-    .sort((left, right) => compareWeekdayOrder(left.dayKey, right.dayKey));
-
-  const readiness = Math.min(
-    100,
-    40 +
-      (profile.goal ? 14 : 0) +
-      (profile.experienceLevel ? 10 : 0) +
-      ((profile.preferredWeeklySessions ?? 0) > 0 ? 16 : 0) +
-      (routineCount > 0 ? 12 : 0) +
-      (planCount > 0 ? 8 : 0),
-  );
-
-  const firstRoutine = routines[0];
-  const heroChip = profile.goal ? formatGoal(profile.goal) : "Base";
-  const heroTitle =
-    orderedWeeklyPlan.length > 0
-      ? `${orderedWeeklyPlan[0]?.dayLabel}: ${orderedWeeklyPlan[0]?.title}`
-      : firstRoutine
-        ? `${firstRoutine.name} esta lista.`
-        : "Crea tu primera semana.";
-  const heroMeta = [
-    `${profile.preferredWeeklySessions ?? 0}x semana`,
-    `${planCount} bloques`,
-    `${libraryCount} ejercicios`,
-  ];
-
-  const todayItems =
-    orderedWeeklyPlan.length > 0
-      ? orderedWeeklyPlan.slice(0, 3).map((entry) => ({
-          title: entry.dayLabel,
-          meta: `${entry.title} · ${entry.meta}`,
-          kind: entry.kind,
-        }))
-      : [
-          {
-            title: "Explora la biblioteca",
-            meta: `${libraryCount} ejercicios disponibles`,
-            kind: "library" as const,
-          },
-          {
-            title: "Ajusta tu objetivo",
-            meta: `${profile.preferredWeeklySessions ?? 0} sesiones por semana`,
-            kind: "run" as const,
-          },
-        ];
-
-  const recentActivity = [
-    ...recentWorkouts.map((session) => {
-      const sessionDate = session.date ?? session.fallbackDate;
-
-      return {
-        id: session.id,
-        sortAt: sessionDate,
-        title: session.routineName ?? "Sesion libre",
-        meta: `Fuerza · ${formatActivityDate(sessionDate)}`,
-        kind: "routine" as const,
-      };
-    }),
-    ...recentRuns.map((session) => ({
-      id: session.id,
-      sortAt: session.date,
-      title: `${session.distanceKm.toFixed(1)} km`,
-      meta: `${formatRunningKind(session.kind)} · ${formatActivityDate(session.date)}`,
-      kind: "run" as const,
-    })),
-  ]
-    .sort((left, right) => right.sortAt.getTime() - left.sortAt.getTime())
-    .slice(0, 4)
-    .map((entry) => {
-      const { sortAt, ...rest } = entry;
-      void sortAt;
-
-      return rest;
-    });
-
-  const socialPreview =
-    friendCount > 0
-      ? [
-          {
-            name: "Amistades",
-            caption: "activas",
-            value: `${friendCount}`,
-            tint: "violet" as const,
-          },
-          {
-            name: "Pendientes",
-            caption: "por revisar",
-            value: `${pendingCount}`,
-            tint: "cyan" as const,
-          },
-          {
-            name: "Avisos",
-            caption: "notificaciones",
-            value: `${notificationCount}`,
-            tint: "pink" as const,
-          },
-        ]
-      : [
-          {
-            name: "Circulo",
-            caption: "amistades",
-            value: "0",
-            tint: "violet" as const,
-          },
-          {
-            name: "Pendientes",
-            caption: "solicitudes",
-            value: `${pendingCount}`,
-            tint: "cyan" as const,
-          },
-          {
-            name: "Calma",
-            caption: "de momento",
-            value: "Invita",
-            tint: "pink" as const,
-          },
-        ];
+  const defaultRoutine =
+    todayScheduledGym && todayScheduledGym.routineTemplateId
+      ? {
+          id: todayScheduledGym.routineTemplateId,
+          name: todayScheduledGym.title,
+        }
+      : fallbackRoutine
+        ? {
+            id: fallbackRoutine.id,
+            name: fallbackRoutine.name,
+          }
+        : null;
 
   return {
-    readiness,
-    canGenerateStarterWeek: routineCount === 0 && planCount === 0,
+    dateLabel: formatDateLabel(),
+    firstName: extractFirstName(profile.displayName),
+    levelLabel: formatLevel(profile.experienceLevel),
+    goalLabel: formatGoal(profile.goal),
     activeWorkoutSummary,
-    heroChip,
-    heroTitle,
-    heroMeta,
-    quickStats: [
+    defaultRoutine,
+    focusMetrics: [
       {
-        key: "goal",
-        label: "Objetivo",
-        value: formatGoal(profile.goal),
+        key: "gym",
+        label: "Gym semana",
+        value: summary.gym.week.sessions.replace(" sesiones", ""),
+        tone: "pink",
+      },
+      {
+        key: "running",
+        label: "Running mes",
+        value: summary.running.month.support,
+        tone: "lime",
       },
       {
         key: "routines",
         label: "Rutinas",
-        value: `${routineCount}`,
-      },
-      {
-        key: "library",
-        label: "Biblioteca",
-        value: `${libraryCount}`,
+        value: `${routines.length}`,
+        tone: "cyan",
       },
     ],
-    todayItems,
-    recentActivity,
-    weeklyPlan: orderedWeeklyPlan,
-    socialPreview,
+    schedule,
     routines: routines.map((routine) => ({
       id: routine.id,
       name: routine.name,
-      itemCount: Number(routine.itemCount),
+      itemCount: Number(routine.itemCount ?? 0),
     })),
-    library: library.map((exercise) => ({
-      id: exercise.id,
-      name: exercise.name,
-      primaryMuscleGroup: formatMuscleGroup(
-        exercise.primaryMuscleGroup || exercise.categoryName || "General",
-      ),
-      equipment: formatEquipment(exercise.equipment || "Mixed"),
-    })),
-    socialCounts: {
-      friends: friendCount,
-      pending: pendingCount,
-      notifications: notificationCount,
+    librarySummary: {
+      systemCount: Number(systemExerciseCountRow?.count ?? 0),
+      customCount: Number(customExerciseCountRow?.count ?? 0),
     },
-    profileMetrics: [
-      {
-        label: "Peso",
-        value: profile.weightKg ? `${profile.weightKg}` : "--",
-      },
-      {
-        label: "Semana",
-        value: profile.preferredWeeklySessions
-          ? `${profile.preferredWeeklySessions}x`
-          : "--",
-      },
-      {
-        label: "Nivel",
-        value: formatExperienceLevel(profile.experienceLevel),
-      },
-    ],
+    summary,
   };
 }

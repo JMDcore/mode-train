@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   integer,
   jsonb,
   pgEnum,
@@ -31,6 +32,11 @@ export const runningKindEnum = pgEnum("running_kind", [
   "long_run",
   "recovery",
   "free",
+]);
+
+export const scheduleEntryTypeEnum = pgEnum("schedule_entry_type", [
+  "gym",
+  "running",
 ]);
 
 export const appUsers = pgTable(
@@ -147,6 +153,24 @@ export const weeklyPlanEntries = pgTable("weekly_plan_entries", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const trainingScheduleEntries = pgTable("training_schedule_entries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => appUsers.id, { onDelete: "cascade" }),
+  entryType: scheduleEntryTypeEnum("entry_type").notNull(),
+  scheduledDate: date("scheduled_date").notNull(),
+  routineTemplateId: uuid("routine_template_id").references(() => routineTemplates.id, {
+    onDelete: "set null",
+  }),
+  title: varchar("title", { length: 140 }).default("").notNull(),
+  runningKind: runningKindEnum("running_kind"),
+  runningTargetKm: real("running_target_km"),
+  notes: text("notes").default("").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const workoutSessions = pgTable("workout_sessions", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
@@ -183,8 +207,8 @@ export const runningSessions = pgTable("running_sessions", {
     .references(() => appUsers.id, { onDelete: "cascade" }),
   kind: runningKindEnum("kind").default("free").notNull(),
   date: timestamp("date", { withTimezone: true }).notNull(),
-  distanceKm: real("distance_km").notNull(),
-  durationSeconds: integer("duration_seconds").notNull(),
+  distanceKm: real("distance_km"),
+  durationSeconds: integer("duration_seconds"),
   averagePaceSeconds: integer("average_pace_seconds"),
   notes: text("notes").default("").notNull(),
   visibility: activityVisibilityEnum("visibility").default("friends").notNull(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Clock3, Dumbbell, Layers3, Scale, TimerReset } from "lucide-react";
+import { ArrowLeft, Clock3, Dumbbell, Layers3, PencilLine, Scale, TimerReset } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 
@@ -16,6 +16,10 @@ export function WorkoutHistoryDetailView(props: {
           <Link href="/app/history" className="detail-back">
             <ArrowLeft size={16} strokeWidth={2.2} />
             Historial
+          </Link>
+          <Link href={`/app/workouts/${props.detail.sessionId}`} className="secondary-button">
+            <PencilLine size={16} strokeWidth={2.2} />
+            Editar
           </Link>
         </div>
 

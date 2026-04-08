@@ -100,11 +100,15 @@ export function WorkoutSession(props: {
           <div className="workout-detail-hero__overlay" />
 
           <div className="detail-hero__copy">
-            <p className="detail-kicker">Bloque</p>
+            <p className="detail-kicker">{props.detail.isFinished ? "Sesion editable" : "Bloque"}</p>
             <h1>
               {props.detail.routineName} <span>{exerciseProgress}/{props.detail.totalExercises}</span>
             </h1>
-            <p>Entraste el {props.detail.startedAtLabel}. Guarda por bloques y sigue fino.</p>
+            <p>
+              {props.detail.isFinished
+                ? `Sesion cerrada el ${props.detail.finishedAtLabel ?? props.detail.startedAtLabel}. Puedes corregir sets si te dejaste algo.`
+                : `Entraste el ${props.detail.startedAtLabel}. Guarda por bloques y sigue fino.`}
+            </p>
             <div className="workout-progress-dots" aria-hidden="true">
               {Array.from({ length: props.detail.totalExercises }).map((_, index) => (
                 <span
@@ -153,7 +157,7 @@ export function WorkoutSession(props: {
           </div>
         </section>
 
-        <CompleteWorkoutCard sessionId={props.detail.sessionId} />
+        {!props.detail.isFinished ? <CompleteWorkoutCard sessionId={props.detail.sessionId} /> : null}
       </div>
     </main>
   );
@@ -189,7 +193,9 @@ function WorkoutExerciseCard(props: {
         </div>
         <span className="detail-badge">
           <Trophy size={14} strokeWidth={2.3} />
-          {props.exercise.currentSets.length > 0 ? `${props.exercise.currentSets.length} guardados` : "Pendiente"}
+          {props.exercise.currentSets.length > 0
+            ? `${props.exercise.currentSets.length} guardados`
+            : "Pendiente"}
         </span>
       </div>
 

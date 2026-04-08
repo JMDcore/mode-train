@@ -141,9 +141,10 @@ async function main() {
     });
 
     if (
-      detailAfterComplete !== null ||
+      detailAfterComplete === null ||
+      !detailAfterComplete.isFinished ||
       activeAfterComplete !== null ||
-      !snapshot.recentActivity.some((item) => item.kind === "routine")
+      snapshot.summary.gym.total.sessions === "0 sesiones"
     ) {
       throw new Error("El cierre de sesion no se ha reflejado en el dashboard.");
     }
@@ -151,7 +152,7 @@ async function main() {
     console.log("Smoke workout lifecycle ok:", {
       routineName: routine.name,
       sessionId: started.sessionId,
-      recentActivity: snapshot.recentActivity[0]?.title ?? null,
+      gymTotal: snapshot.summary.gym.total.sessions,
     });
   } finally {
     await db.delete(appUsers).where(eq(appUsers.id, createdUser.id));

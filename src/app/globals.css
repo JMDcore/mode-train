@@ -4032,3 +4032,1038 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+.mt-shell::before {
+  inset: 0.12rem;
+  border-radius: 1.6rem;
+  background:
+    radial-gradient(circle at 16% 10%, rgba(143, 98, 255, 0.13), transparent 26%),
+    radial-gradient(circle at 82% 10%, rgba(183, 245, 66, 0.06), transparent 16%),
+    linear-gradient(180deg, rgba(12, 13, 20, 0.96), rgba(7, 8, 14, 0.96));
+  border-color: rgba(255, 255, 255, 0.045);
+}
+
+.mt-header {
+  padding-top: 0.2rem;
+}
+
+.mt-header__title {
+  margin: 0.18rem 0 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.mt-tabbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(11, 12, 18, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.mt-tabbar__item {
+  position: relative;
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.mt-tabbar__item--active {
+  color: white;
+}
+
+.mt-tabbar__dot {
+  position: absolute;
+  bottom: 0.32rem;
+  height: 0.24rem;
+  width: 0.24rem;
+  border-radius: 999px;
+  background: #ff7a1a;
+}
+
+.mt-screen {
+  display: grid;
+  gap: 1rem;
+}
+
+.mt-dashboard-card,
+.mt-planner-card,
+.mt-summary-card,
+.mt-profile-card,
+.mt-focus-card,
+.mt-form-card,
+.routine-hub-card,
+.mt-mini-panel,
+.mt-activity-panel,
+.mt-record-panel,
+.mt-running-panel,
+.mt-metric-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(180deg, rgba(17, 18, 28, 0.96), rgba(10, 11, 18, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 26px 56px rgba(2, 3, 8, 0.24);
+}
+
+.mt-dashboard-card {
+  padding: 1rem;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(143, 98, 255, 0.12), transparent 20%),
+    radial-gradient(circle at 82% 16%, rgba(18, 199, 244, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(18, 20, 31, 0.98), rgba(11, 12, 19, 0.98));
+}
+
+.mt-dashboard-card__top,
+.mt-dashboard-card__meta,
+.mt-focus-card__head,
+.mt-focus-card__actions,
+.mt-panel-headline,
+.mt-summary-card__head,
+.mt-running-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mt-greeting {
+  display: flex;
+  align-items: center;
+  gap: 0.78rem;
+}
+
+.mt-greeting__avatar,
+.mt-profile-avatar {
+  display: inline-flex;
+  height: 3.2rem;
+  width: 3.2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 44%),
+    linear-gradient(160deg, rgba(171, 146, 255, 1), rgba(111, 73, 238, 0.96));
+  color: white;
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: 0 16px 34px rgba(91, 55, 182, 0.3);
+}
+
+.mt-greeting p,
+.mt-profile-card__hero span,
+.mt-form-card__head p,
+.mt-kicker {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mt-greeting h2,
+.mt-planner-card__head h2,
+.mt-summary-card__head h2,
+.mt-profile-card__hero h2,
+.mt-focus-card__copy h3 {
+  margin: 0.12rem 0 0;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.mt-notification-badge,
+.mt-level-pill,
+.mt-chip,
+.mt-range-pill,
+.mt-scope-pill,
+.mt-body-analytics__row,
+.mt-profile-metrics__item,
+.mt-record-row em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mt-notification-badge {
+  min-width: 2rem;
+  padding: 0.36rem 0.62rem;
+  background: linear-gradient(180deg, #ff9a45, #ff6f22);
+  color: white;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.mt-dashboard-card__meta {
+  margin-top: 1rem;
+  padding: 0.94rem 1rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.mt-dashboard-card__meta span {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.mt-dashboard-card__meta strong {
+  margin-top: 0.18rem;
+  display: block;
+  font-size: 1.05rem;
+}
+
+.mt-level-pill {
+  padding: 0.68rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(226, 221, 244, 0.92);
+  font-weight: 700;
+}
+
+.mt-ring-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.mt-ring-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.56rem;
+}
+
+.mt-ring-card__chart {
+  height: 5.5rem;
+  width: 5.5rem;
+  transform: rotate(-90deg);
+}
+
+.mt-ring-card__track,
+.mt-ring-card__progress {
+  fill: none;
+  stroke-width: 9;
+}
+
+.mt-ring-card__track {
+  stroke: rgba(255, 255, 255, 0.07);
+}
+
+.mt-ring-card__progress {
+  stroke-linecap: round;
+}
+
+.mt-ring-card__progress--pink {
+  stroke: #ff4d93;
+}
+
+.mt-ring-card__progress--lime {
+  stroke: #b7f542;
+}
+
+.mt-ring-card__progress--cyan {
+  stroke: #12c7f4;
+}
+
+.mt-ring-card__copy {
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  text-align: center;
+}
+
+.mt-ring-card__copy strong {
+  font-size: 1.2rem;
+  letter-spacing: -0.05em;
+}
+
+.mt-ring-card__copy span {
+  font-size: 0.76rem;
+  color: white;
+}
+
+.mt-ring-card__copy em {
+  font-style: normal;
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.mt-week-strip {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.34rem;
+}
+
+.mt-week-dot {
+  display: grid;
+  justify-items: center;
+  gap: 0.36rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.mt-week-dot__count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+}
+
+.mt-week-dot__ring {
+  height: 2.25rem;
+  width: 2.25rem;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 4px rgba(183, 245, 66, 0.02);
+}
+
+.mt-week-dot--today .mt-week-dot__ring {
+  border-color: #b7f542;
+  box-shadow:
+    0 0 0 4px rgba(183, 245, 66, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mt-week-dot__label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.mt-inline-note {
+  padding: 0.86rem 1rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(183, 245, 66, 0.18);
+  background: rgba(183, 245, 66, 0.06);
+  font-size: 0.86rem;
+  color: rgba(233, 255, 188, 0.92);
+}
+
+.mt-focus-card {
+  min-height: 20rem;
+}
+
+.mt-focus-card__art,
+.mt-focus-card__image,
+.mt-focus-card__veil {
+  position: absolute;
+  inset: 0;
+}
+
+.mt-focus-card__image {
+  object-fit: cover;
+  object-position: center 12%;
+  opacity: 0.88;
+}
+
+.mt-focus-card__veil {
+  background:
+    radial-gradient(circle at 78% 18%, rgba(183, 245, 66, 0.14), transparent 16%),
+    radial-gradient(circle at 16% 18%, rgba(143, 98, 255, 0.18), transparent 18%),
+    linear-gradient(180deg, rgba(10, 11, 18, 0.08), rgba(7, 8, 14, 0.82) 46%, rgba(7, 8, 14, 0.98));
+}
+
+.mt-focus-card__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 20rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.mt-chip {
+  padding: 0.58rem 0.9rem;
+  background: rgba(17, 20, 29, 0.84);
+  color: rgba(238, 238, 246, 0.92);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.mt-chip--violet {
+  border-color: rgba(143, 98, 255, 0.28);
+  color: #d9c8ff;
+}
+
+.mt-chip--lime {
+  border-color: rgba(183, 245, 66, 0.28);
+  color: #e5ff9f;
+}
+
+.mt-chip--ghost {
+  color: var(--text-soft);
+}
+
+.mt-focus-card__copy {
+  display: grid;
+  gap: 0.44rem;
+  max-width: 15rem;
+}
+
+.mt-focus-card__copy p:last-child {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(226, 221, 244, 0.82);
+}
+
+.mt-kicker {
+  margin: 0;
+}
+
+.mt-primary-pill,
+.mt-secondary-pill,
+.mt-action-button,
+.mt-inline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.62rem;
+  min-height: 3.5rem;
+  padding: 0 1.12rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.mt-primary-pill {
+  min-width: 11rem;
+  background: rgba(8, 9, 15, 0.9);
+  color: white;
+  box-shadow: 0 16px 32px rgba(2, 3, 8, 0.22);
+}
+
+.mt-primary-pill__play {
+  height: 2.6rem;
+  width: 2.6rem;
+  border-radius: 999px;
+  background: white;
+  position: relative;
+}
+
+.mt-primary-pill__play::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-38%, -50%);
+  border-top: 0.42rem solid transparent;
+  border-bottom: 0.42rem solid transparent;
+  border-left: 0.62rem solid #0b0b12;
+}
+
+.mt-secondary-pill {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+}
+
+.mt-secondary-pill--block {
+  width: 100%;
+}
+
+.mt-home-grid,
+.mt-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.mt-mini-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  text-align: left;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mt-mini-panel--link {
+  width: 100%;
+}
+
+.mt-mini-panel__icon,
+.mt-activity-row__icon,
+.mt-agenda-row__icon,
+.mt-schedule-entry__icon,
+.mt-metric-card__icon {
+  display: inline-flex;
+  height: 2.8rem;
+  width: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: white;
+  flex-shrink: 0;
+}
+
+.mt-mini-panel p,
+.mt-agenda-row__copy strong,
+.mt-activity-row__copy strong,
+.mt-record-row strong,
+.mt-form-card__head h3,
+.mt-planner-card__dayhead h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.mt-mini-panel span,
+.mt-agenda-row__copy span,
+.mt-activity-row__copy span,
+.mt-form-feedback,
+.mt-form-card__head span,
+.mt-planner-card__dayhead p,
+.mt-record-row span {
+  font-size: 0.84rem;
+  color: var(--text-soft);
+}
+
+.mt-list-section,
+.mt-form-stack,
+.mt-summary-stack,
+.mt-profile-links,
+.mt-planner-list,
+.routine-hub-card__copy,
+.routine-hub-card__actions,
+.mt-running-panel__records,
+.mt-body-analytics__list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.mt-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mt-section-head span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mt-section-head button {
+  border: 0;
+  background: transparent;
+  color: #b7f542;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mt-agenda-row,
+.mt-activity-row,
+.mt-schedule-entry,
+.mt-record-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.024);
+}
+
+.mt-agenda-row__icon--violet,
+.mt-schedule-entry__icon--violet,
+.mt-activity-row__icon--violet,
+.mt-metric-card--violet .mt-metric-card__icon {
+  background: rgba(143, 98, 255, 0.18);
+}
+
+.mt-agenda-row__icon--lime,
+.mt-schedule-entry__icon--lime,
+.mt-activity-row__icon--lime,
+.mt-metric-card--lime .mt-metric-card__icon {
+  background: rgba(183, 245, 66, 0.14);
+}
+
+.mt-empty-panel {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mt-empty-panel strong {
+  font-size: 0.96rem;
+}
+
+.mt-empty-panel span {
+  font-size: 0.84rem;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.mt-planner-card,
+.mt-summary-card,
+.mt-profile-card {
+  padding: 1rem;
+}
+
+.mt-day-selector {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.mt-day-pill {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+  padding: 0.82rem 0.45rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+}
+
+.mt-day-pill span {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mt-day-pill strong {
+  font-size: 1rem;
+}
+
+.mt-day-pill--active {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(143, 98, 255, 0.14), transparent 28%),
+    linear-gradient(180deg, rgba(29, 30, 43, 0.98), rgba(16, 17, 25, 0.98));
+  border-color: rgba(143, 98, 255, 0.18);
+}
+
+.mt-planner-card__body {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.mt-schedule-entry__main,
+.mt-activity-row__copy,
+.mt-agenda-row__copy,
+.mt-body-analytics__row,
+.mt-record-row > div {
+  display: flex;
+  align-items: center;
+  gap: 0.76rem;
+}
+
+.mt-schedule-entry__main,
+.mt-activity-row__copy,
+.mt-agenda-row__copy {
+  min-width: 0;
+}
+
+.mt-schedule-entry__main > div,
+.mt-agenda-row__copy,
+.mt-activity-row__copy {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.mt-schedule-entry__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mt-icon-button {
+  display: inline-flex;
+  height: 2.4rem;
+  width: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mt-inline-button {
+  min-height: 2.6rem;
+  padding: 0 0.95rem;
+  background: rgba(143, 98, 255, 0.14);
+  color: white;
+}
+
+.mt-form-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.mt-form-card {
+  padding: 1rem;
+}
+
+.mt-form-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.mt-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mt-field--full {
+  grid-column: 1 / -1;
+}
+
+.mt-field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mt-field input,
+.mt-field select {
+  width: 100%;
+  min-height: 3.15rem;
+  padding: 0 0.95rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+
+.mt-action-button {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.mt-action-button--violet {
+  background: linear-gradient(160deg, rgba(136, 89, 255, 1), rgba(109, 67, 229, 1));
+  color: white;
+}
+
+.mt-action-button--lime {
+  background: linear-gradient(160deg, rgba(189, 255, 86, 1), rgba(157, 230, 58, 1));
+  color: #081008;
+}
+
+.mt-action-button--ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.mt-form-feedback {
+  margin: 0.75rem 0 0;
+}
+
+.mt-form-feedback--error {
+  color: #ff8bb3;
+}
+
+.mt-summary-card {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(143, 98, 255, 0.12), transparent 20%),
+    radial-gradient(circle at 82% 10%, rgba(183, 245, 66, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(17, 18, 28, 0.98), rgba(10, 11, 18, 0.98));
+}
+
+.mt-range-row,
+.mt-scope-row,
+.mt-segmented,
+.mt-profile-metrics,
+.routine-hub-card__meta {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.mt-range-row {
+  margin-top: 0.8rem;
+  grid-template-columns: 1.25fr 1fr;
+}
+
+.mt-range-pill {
+  gap: 0.56rem;
+  min-height: 3.2rem;
+  padding: 0 1rem;
+  justify-content: flex-start;
+  background: rgba(10, 11, 17, 0.92);
+  color: white;
+  font-weight: 700;
+}
+
+.mt-range-pill--ghost {
+  color: var(--text-soft);
+}
+
+.mt-segmented {
+  margin-top: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0.36rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mt-segmented__item {
+  min-height: 2.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.mt-segmented__item--active,
+.mt-scope-pill--active {
+  background: #c8ff49;
+  color: #10140a;
+}
+
+.mt-scope-row {
+  margin-top: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mt-scope-pill {
+  min-height: 2.6rem;
+  padding: 0 0.8rem;
+  border: 0;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.mt-metric-card {
+  padding: 1rem;
+}
+
+.mt-metric-card__head,
+.mt-running-panel__records,
+.mt-profile-card__hero {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mt-metric-card__head strong {
+  font-size: 0.92rem;
+}
+
+.mt-metric-card__body {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.mt-metric-card__body h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.05em;
+}
+
+.mt-metric-card__body p,
+.mt-metric-card__foot {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-soft);
+}
+
+.mt-metric-card__foot {
+  margin-top: 1rem;
+  color: white;
+}
+
+.mt-body-analytics {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mt-body-analytics__art {
+  position: relative;
+  min-height: 21rem;
+  overflow: hidden;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mt-body-analytics__image {
+  object-fit: cover;
+  object-position: center 18%;
+}
+
+.mt-body-analytics__row {
+  justify-content: space-between;
+  padding: 0.92rem 1rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.024);
+}
+
+.mt-body-analytics__row strong {
+  font-size: 0.94rem;
+}
+
+.mt-running-panel {
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.mt-running-panel__ring {
+  display: grid;
+  place-items: center;
+  min-height: 13rem;
+  flex: 1;
+  border-radius: 1.6rem;
+  background:
+    radial-gradient(circle at center, rgba(183, 245, 66, 0.08), transparent 45%),
+    linear-gradient(180deg, rgba(9, 10, 16, 0.96), rgba(13, 14, 20, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mt-running-panel__ring-value {
+  display: grid;
+  gap: 0.24rem;
+  justify-items: center;
+}
+
+.mt-running-panel__ring-value span {
+  font-size: 0.82rem;
+  color: var(--text-faint);
+}
+
+.mt-running-panel__ring-value strong {
+  font-size: 1.9rem;
+  letter-spacing: -0.06em;
+}
+
+.mt-running-panel__records {
+  flex: 1;
+  flex-direction: column;
+}
+
+.mt-profile-card__hero {
+  align-items: center;
+}
+
+.mt-profile-metrics {
+  margin-top: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mt-profile-metrics__item {
+  min-height: 3.3rem;
+  padding: 0 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  font-weight: 700;
+}
+
+.routines-hero {
+  background:
+    radial-gradient(circle at 16% 10%, rgba(143, 98, 255, 0.12), transparent 22%),
+    radial-gradient(circle at 78% 12%, rgba(183, 245, 66, 0.06), transparent 18%),
+    linear-gradient(180deg, rgba(16, 17, 27, 0.98), rgba(10, 11, 18, 0.98));
+}
+
+.routine-hub-card {
+  padding: 1rem;
+}
+
+.routine-hub-card__meta {
+  margin-top: 0.3rem;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
+
+.routine-hub-card__copy h2 {
+  margin: 0;
+  font-size: 1.18rem;
+}
+
+.routine-hub-card__copy p:last-child {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.routine-hub-card__actions {
+  margin-top: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quick-routine-form--full .quick-routine-form__row {
+  width: 100%;
+}
+
+.editor-grid-form--wide {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 420px) {
+  .mt-ring-grid,
+  .mt-home-grid,
+  .mt-summary-grid,
+  .mt-range-row,
+  .mt-profile-metrics,
+  .routine-hub-card__actions,
+  .mt-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mt-day-selector {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mt-running-panel,
+  .mt-agenda-row,
+  .mt-activity-row,
+  .mt-schedule-entry,
+  .mt-mini-panel,
+  .mt-dashboard-card__top,
+  .mt-dashboard-card__meta,
+  .mt-focus-card__actions,
+  .mt-profile-card__hero,
+  .routine-hub-card__meta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mt-schedule-entry__actions {
+    justify-content: flex-start;
+  }
+}

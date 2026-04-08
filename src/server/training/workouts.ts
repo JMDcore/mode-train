@@ -46,6 +46,8 @@ export type WorkoutSessionDetail = {
   routineName: string;
   startedAt: Date;
   startedAtLabel: string;
+  finishedAtLabel: string | null;
+  isFinished: boolean;
   savedSets: number;
   completedExercises: number;
   totalExercises: number;
@@ -267,7 +269,7 @@ export async function getWorkoutSessionDetail(
     )
     .limit(1);
 
-  if (!session || session.finishedAt) {
+  if (!session) {
     return null;
   }
 
@@ -335,6 +337,8 @@ export async function getWorkoutSessionDetail(
     routineName: session.routineName ?? "Sesion de fuerza",
     startedAt: session.startedAt,
     startedAtLabel: formatStartedAt(session.startedAt),
+    finishedAtLabel: session.finishedAt ? formatStartedAt(session.finishedAt) : null,
+    isFinished: Boolean(session.finishedAt),
     savedSets: currentSets.length,
     completedExercises: completedExerciseIds.size,
     totalExercises: items.length,
@@ -385,10 +389,6 @@ export async function saveWorkoutExerciseBlock(params: {
 
   if (!session) {
     throw new Error("No hemos encontrado esta sesion.");
-  }
-
-  if (session.finishedAt) {
-    throw new Error("Esta sesion ya esta cerrada.");
   }
 
   if (!session.routineTemplateId) {

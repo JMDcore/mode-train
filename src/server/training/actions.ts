@@ -9,10 +9,13 @@ import { z } from "zod";
 import { requireUser } from "@/server/auth/session";
 import { getDb } from "@/server/db";
 import {
+  exercises,
   routineTemplateItems,
   routineTemplates,
   runningKindEnum,
   runningSessions,
+  scheduleEntryTypeEnum,
+  trainingScheduleEntries,
 } from "@/server/db/schema";
 import { getUserProfile, isProfileComplete } from "@/server/profile";
 import {
@@ -25,6 +28,8 @@ import type {
   RoutineActionState,
   RoutineItemActionState,
   RunLogActionState,
+  ExerciseActionState,
+  ScheduleActionState,
   StarterPlanActionState,
   WorkoutCompleteActionState,
   WorkoutExerciseBlockActionState,
@@ -50,15 +55,48 @@ const routineLaunchSchema = z.object({
 
 const runningLogSchema = z.object({
   kind: z.enum(runningKindEnum.enumValues),
-  distanceKm: z.coerce
-    .number()
-    .min(0.5, "La distancia debe ser mayor de 0.5 km.")
-    .max(120, "La distancia parece incorrecta."),
-  durationMinutes: z.coerce
-    .number()
-    .int("La duracion debe ser un numero entero.")
-    .min(5, "La duracion minima es de 5 minutos.")
-    .max(600, "La duracion parece incorrecta."),
+  date: z
+    .string()
+    .trim()
+    .min(10, "Selecciona la fecha de la carrera."),
+  distanceKm: z.union([z.coerce.number().min(0.5).max(250), z.nan()]).optional(),
+  durationMinutes: z.union([z.coerce.number().int().min(1).max(1440), z.nan()]).optional(),
+  notes: z.string().trim().max(240).optional().default(""),
+});
+
+const customExerciseSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Ponle un nombre al ejercicio.")
+    .max(140, "El nombre es demasiado largo."),
+  primaryMuscleGroup: z
+    .string()
+    .trim()
+    .min(2, "Indica el grupo principal.")
+    .max(80, "El grupo muscular es demasiado largo."),
+  equipment: z
+    .string()
+    .trim()
+    .min(2, "Indica el material.")
+    .max(80, "El material es demasiado largo."),
+  description: z.string().trim().max(320).optional().default(""),
+});
+
+const scheduleEntrySchema = z.object({
+  entryType: z.enum(scheduleEntryTypeEnum.enumValues),
+  scheduledDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Selecciona una fecha valida."),
+  routineTemplateId: z.string().trim().optional().default(""),
+  runningKind: z.enum(runningKindEnum.enumValues).optional(),
+  runningTargetKm: z.union([z.coerce.number().min(0.5).max(250), z.nan()]).optional(),
+  title: z.string().trim().max(140).optional().default(""),
+  notes: z.string().trim().max(240).optional().default(""),
+});
+
+const scheduleDeleteSchema = z.object({
+  entryId: z.string().uuid("La planificacion no es valida."),
 });
 
 const routineItemAddSchema = z.object({
@@ -686,24 +724,45 @@ export async function logRunningSessionAction(
     const db = getDb();
     const parsed = runningLogSchema.parse({
       kind: String(formData.get("kind") ?? ""),
-      distanceKm: formData.get("distanceKm"),
-      durationMinutes: formData.get("durationMinutes"),
+      date: String(formData.get("date") ?? ""),
+      distanceKm: formData.get("distanceKm") === "" ? undefined : formData.get("distanceKm"),
+      durationMinutes:
+        formData.get("durationMinutes") === "" ? undefined : formData.get("durationMinutes"),
+      notes: String(formData.get("notes") ?? ""),
     });
 
-    const durationSeconds = parsed.durationMinutes * 60;
-    const averagePaceSeconds = Math.round(durationSeconds / parsed.distanceKm);
+    const distanceKm =
+      parsed.distanceKm === undefined || Number.isNaN(parsed.distanceKm)
+        ? null
+        : parsed.distanceKm;
+    const durationMinutes =
+      parsed.durationMinutes === undefined || Number.isNaN(parsed.durationMinutes)
+        ? null
+        : parsed.durationMinutes;
+
+    if (distanceKm === null && durationMinutes === null) {
+      throw new Error("Anade al menos distancia o duracion para guardar la carrera.");
+    }
+
+    const durationSeconds = durationMinutes !== null ? durationMinutes * 60 : null;
+    const averagePaceSeconds =
+      durationSeconds !== null && distanceKm !== null && distanceKm > 0
+        ? Math.round(durationSeconds / distanceKm)
+        : null;
 
     await db.insert(runningSessions).values({
       userId: user.id,
       kind: parsed.kind,
-      date: new Date(),
-      distanceKm: parsed.distanceKm,
+      date: new Date(`${parsed.date}T12:00:00`),
+      distanceKm,
       durationSeconds,
       averagePaceSeconds,
-      notes: "Registro rapido",
+      notes: parsed.notes,
     });
 
     revalidatePath("/app");
+    revalidatePath("/app/history");
+    revalidatePath("/app/progress");
 
     return {
       error: null,
@@ -712,6 +771,178 @@ export async function logRunningSessionAction(
   } catch (error) {
     return {
       error: toActionError(error, "No se ha podido guardar la carrera."),
+      success: null,
+    };
+  }
+}
+
+export async function createCustomExerciseAction(
+  _previousState: ExerciseActionState,
+  formData: FormData,
+): Promise<ExerciseActionState> {
+  try {
+    const user = await requireUser();
+    const db = getDb();
+    const parsed = customExerciseSchema.parse({
+      name: String(formData.get("name") ?? ""),
+      primaryMuscleGroup: String(formData.get("primaryMuscleGroup") ?? ""),
+      equipment: String(formData.get("equipment") ?? ""),
+      description: String(formData.get("description") ?? ""),
+    });
+
+    const [existingExercise] = await db
+      .select({ id: exercises.id })
+      .from(exercises)
+      .where(and(eq(exercises.ownerUserId, user.id), eq(exercises.name, parsed.name)))
+      .limit(1);
+
+    if (existingExercise) {
+      throw new Error("Ya tienes un ejercicio con ese nombre.");
+    }
+
+    await db.insert(exercises).values({
+      ownerUserId: user.id,
+      categoryId: null,
+      name: parsed.name,
+      description: parsed.description,
+      primaryMuscleGroup: parsed.primaryMuscleGroup,
+      equipment: parsed.equipment,
+      tags: [],
+      isSystem: false,
+    });
+
+    revalidatePath("/app");
+    revalidatePath("/app/routines");
+
+    return {
+      error: null,
+      success: "Ejercicio personalizado creado.",
+    };
+  } catch (error) {
+    return {
+      error: toActionError(error, "No se ha podido crear el ejercicio."),
+      success: null,
+    };
+  }
+}
+
+export async function createScheduleEntryAction(
+  _previousState: ScheduleActionState,
+  formData: FormData,
+): Promise<ScheduleActionState> {
+  try {
+    const user = await requireUser();
+    const db = getDb();
+    const parsed = scheduleEntrySchema.parse({
+      entryType: String(formData.get("entryType") ?? ""),
+      scheduledDate: String(formData.get("scheduledDate") ?? ""),
+      routineTemplateId: String(formData.get("routineTemplateId") ?? ""),
+      runningKind: String(formData.get("runningKind") ?? runningKindEnum.enumValues[5]),
+      runningTargetKm:
+        formData.get("runningTargetKm") === "" ? undefined : formData.get("runningTargetKm"),
+      title: String(formData.get("title") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+    });
+
+    if (parsed.entryType === "gym") {
+      if (!parsed.routineTemplateId) {
+        throw new Error("Selecciona una rutina para planificar el gym.");
+      }
+
+      const [routine] = await db
+        .select({
+          id: routineTemplates.id,
+          name: routineTemplates.name,
+        })
+        .from(routineTemplates)
+        .where(
+          and(
+            eq(routineTemplates.id, parsed.routineTemplateId),
+            eq(routineTemplates.ownerUserId, user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!routine) {
+        throw new Error("No hemos encontrado esa rutina.");
+      }
+
+      await db.insert(trainingScheduleEntries).values({
+        userId: user.id,
+        entryType: "gym",
+        scheduledDate: parsed.scheduledDate,
+        routineTemplateId: routine.id,
+        title: routine.name,
+        notes: parsed.notes,
+      });
+    } else {
+      const runningTargetKm =
+        parsed.runningTargetKm === undefined || Number.isNaN(parsed.runningTargetKm)
+          ? null
+          : parsed.runningTargetKm;
+
+      await db.insert(trainingScheduleEntries).values({
+        userId: user.id,
+        entryType: "running",
+        scheduledDate: parsed.scheduledDate,
+        title: parsed.title || "Running",
+        runningKind: parsed.runningKind ?? "free",
+        runningTargetKm,
+        notes: parsed.notes,
+      });
+    }
+
+    revalidatePath("/app");
+
+    return {
+      error: null,
+      success: "Entreno planificado.",
+    };
+  } catch (error) {
+    return {
+      error: toActionError(error, "No se ha podido planificar el entreno."),
+      success: null,
+    };
+  }
+}
+
+export async function deleteScheduleEntryAction(
+  _previousState: ScheduleActionState,
+  formData: FormData,
+): Promise<ScheduleActionState> {
+  try {
+    const user = await requireUser();
+    const db = getDb();
+    const parsed = scheduleDeleteSchema.parse({
+      entryId: String(formData.get("entryId") ?? ""),
+    });
+
+    const [entry] = await db
+      .select({ id: trainingScheduleEntries.id })
+      .from(trainingScheduleEntries)
+      .where(
+        and(
+          eq(trainingScheduleEntries.id, parsed.entryId),
+          eq(trainingScheduleEntries.userId, user.id),
+        ),
+      )
+      .limit(1);
+
+    if (!entry) {
+      throw new Error("No hemos encontrado esa planificacion.");
+    }
+
+    await db.delete(trainingScheduleEntries).where(eq(trainingScheduleEntries.id, entry.id));
+
+    revalidatePath("/app");
+
+    return {
+      error: null,
+      success: "Planificacion eliminada.",
+    };
+  } catch (error) {
+    return {
+      error: toActionError(error, "No se ha podido eliminar la planificacion."),
       success: null,
     };
   }
