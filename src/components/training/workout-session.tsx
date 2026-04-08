@@ -3,6 +3,8 @@
 import {
   ArrowLeft,
   Check,
+  ChevronDown,
+  ChevronUp,
   Clock3,
   LoaderCircle,
   Plus,
@@ -69,6 +71,11 @@ export function WorkoutSession(props: {
   const exerciseProgress = Math.max(
     1,
     Math.min(props.detail.totalExercises, props.detail.completedExercises + 1),
+  );
+  const [expandedExerciseId, setExpandedExerciseId] = useState(
+    props.detail.exercises.find((exercise) => exercise.currentSets.length < exercise.targetSets)?.routineItemId ??
+      props.detail.exercises[0]?.routineItemId ??
+      "",
   );
 
   return (
@@ -152,6 +159,12 @@ export function WorkoutSession(props: {
                 key={`${exercise.routineItemId}-${exercise.currentSets.map((set) => `${set.setNumber}:${set.weightKg ?? ""}:${set.reps ?? ""}:${set.rir ?? ""}`).join("|")}`}
                 exercise={exercise}
                 sessionId={props.detail.sessionId}
+                expanded={expandedExerciseId === exercise.routineItemId}
+                onToggle={() =>
+                  setExpandedExerciseId((current) =>
+                    current === exercise.routineItemId ? "" : exercise.routineItemId,
+                  )
+                }
               />
             ))}
           </div>
@@ -166,6 +179,8 @@ export function WorkoutSession(props: {
 function WorkoutExerciseCard(props: {
   sessionId: string;
   exercise: WorkoutSessionDetail["exercises"][number];
+  expanded: boolean;
+  onToggle: () => void;
 }) {
   const [state, formAction] = useActionState(saveWorkoutExerciseBlockAction, initialBlockState);
   const [sets, setSets] = useState<SetDraft[]>(() => buildInitialSetDrafts(props.exercise));
@@ -191,12 +206,21 @@ function WorkoutExerciseCard(props: {
             {props.exercise.primaryMuscleGroup} · {props.exercise.equipment}
           </p>
         </div>
-        <span className="detail-badge">
-          <Trophy size={14} strokeWidth={2.3} />
-          {props.exercise.currentSets.length > 0
-            ? `${props.exercise.currentSets.length} guardados`
-            : "Pendiente"}
-        </span>
+        <div className="session-card__head-actions">
+          <span className="detail-badge">
+            <Trophy size={14} strokeWidth={2.3} />
+            {props.exercise.currentSets.length > 0
+              ? `${props.exercise.currentSets.length} guardados`
+              : "Pendiente"}
+          </span>
+          <button type="button" className="session-card__toggle" onClick={props.onToggle}>
+            {props.expanded ? (
+              <ChevronUp size={16} strokeWidth={2.4} />
+            ) : (
+              <ChevronDown size={16} strokeWidth={2.4} />
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="session-meta-row">
@@ -217,110 +241,121 @@ function WorkoutExerciseCard(props: {
         </div>
       ) : null}
 
-      <form action={formAction} className="session-form">
-        <input type="hidden" name="sessionId" value={props.sessionId} />
-        <input type="hidden" name="exerciseId" value={props.exercise.exerciseId} />
-        <input type="hidden" name="setsJson" value={setsJson} />
+      {props.expanded ? (
+        <form action={formAction} className="session-form">
+          <input type="hidden" name="sessionId" value={props.sessionId} />
+          <input type="hidden" name="exerciseId" value={props.exercise.exerciseId} />
+          <input type="hidden" name="setsJson" value={setsJson} />
 
-        <div className="session-sets">
-          <div className="set-table-head" aria-hidden="true">
-            <span>Set</span>
-            <span>Kg</span>
-            <span>Reps</span>
-            <span>RIR</span>
+          <div className="session-sets">
+            <div className="set-table-head" aria-hidden="true">
+              <span>Set</span>
+              <span>Kg</span>
+              <span>Reps</span>
+              <span>RIR</span>
+            </div>
+
+            {sets.map((set, index) => (
+              <div key={set.id} className="set-row">
+                <span className="set-row__label">S{index + 1}</span>
+
+                <label className="set-row__field" aria-label={`Peso set ${index + 1}`}>
+                  <input
+                    type="number"
+                    min="0"
+                    max="600"
+                    step="0.5"
+                    placeholder="0"
+                    value={set.weightKg}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setSets((current) =>
+                        current.map((entry, entryIndex) =>
+                          entryIndex === index ? { ...entry, weightKg: next } : entry,
+                        ),
+                      );
+                    }}
+                  />
+                </label>
+
+                <label className="set-row__field" aria-label={`Repeticiones set ${index + 1}`}>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    step="1"
+                    placeholder="0"
+                    value={set.reps}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setSets((current) =>
+                        current.map((entry, entryIndex) =>
+                          entryIndex === index ? { ...entry, reps: next } : entry,
+                        ),
+                      );
+                    }}
+                  />
+                </label>
+
+                <label className="set-row__field" aria-label={`RIR set ${index + 1}`}>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="1"
+                    placeholder="0"
+                    value={set.rir}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      setSets((current) =>
+                        current.map((entry, entryIndex) =>
+                          entryIndex === index ? { ...entry, rir: next } : entry,
+                        ),
+                      );
+                    }}
+                  />
+                </label>
+              </div>
+            ))}
           </div>
 
-          {sets.map((set, index) => (
-            <div key={set.id} className="set-row">
-              <span className="set-row__label">S{index + 1}</span>
+          <div className="session-actions">
+            <div className="session-actions__minor">
+              <button
+                type="button"
+                className="ghost-button ghost-button--compact"
+                onClick={() =>
+                  setSets((current) => [...current, createSetDraft(current.length)])
+                }
+              >
+                <Plus size={15} strokeWidth={2.3} />
+                Anadir
+              </button>
 
-              <label className="set-row__field" aria-label={`Peso set ${index + 1}`}>
-                <input
-                  type="number"
-                  min="0"
-                  max="600"
-                  step="0.5"
-                  placeholder="0"
-                  value={set.weightKg}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setSets((current) =>
-                      current.map((entry, entryIndex) =>
-                        entryIndex === index ? { ...entry, weightKg: next } : entry,
-                      ),
-                    );
-                  }}
-                />
-              </label>
-
-              <label className="set-row__field" aria-label={`Repeticiones set ${index + 1}`}>
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  step="1"
-                  placeholder="0"
-                  value={set.reps}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setSets((current) =>
-                      current.map((entry, entryIndex) =>
-                        entryIndex === index ? { ...entry, reps: next } : entry,
-                      ),
-                    );
-                  }}
-                />
-              </label>
-
-              <label className="set-row__field" aria-label={`RIR set ${index + 1}`}>
-                <input
-                  type="number"
-                  min="0"
-                  max="5"
-                  step="1"
-                  placeholder="0"
-                  value={set.rir}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setSets((current) =>
-                      current.map((entry, entryIndex) =>
-                        entryIndex === index ? { ...entry, rir: next } : entry,
-                      ),
-                    );
-                  }}
-                />
-              </label>
+              <button
+                type="button"
+                className="ghost-button ghost-button--compact"
+                disabled={sets.length <= 1}
+                onClick={() =>
+                  setSets((current) => (current.length > 1 ? current.slice(0, -1) : current))
+                }
+              >
+                <X size={15} strokeWidth={2.3} />
+                Quitar
+              </button>
             </div>
-          ))}
+
+            <SaveBlockButton />
+          </div>
+        </form>
+      ) : (
+        <div className="session-card__preview">
+          <span>{props.exercise.targetSets} sets objetivo</span>
+          <strong>
+            {props.exercise.targetRepsMin}-{props.exercise.targetRepsMax} reps
+          </strong>
         </div>
-
-        <div className="session-actions">
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() =>
-              setSets((current) => [...current, createSetDraft(current.length)])
-            }
-          >
-            <Plus size={15} strokeWidth={2.3} />
-            Anadir set
-          </button>
-
-          <button
-            type="button"
-            className="ghost-button"
-            disabled={sets.length <= 1}
-            onClick={() =>
-              setSets((current) => (current.length > 1 ? current.slice(0, -1) : current))
-            }
-          >
-            <X size={15} strokeWidth={2.3} />
-            Quitar ultimo
-          </button>
-
-          <SaveBlockButton />
-        </div>
-      </form>
+      )}
 
       {state.error ? <p className="detail-feedback detail-feedback--error">{state.error}</p> : null}
       {state.success ? <p className="detail-feedback">{state.success}</p> : null}

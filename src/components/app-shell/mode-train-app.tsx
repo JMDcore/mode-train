@@ -5,6 +5,7 @@ import {
   Activity,
   Bell,
   CalendarDays,
+  ChevronLeft,
   ChevronRight,
   CirclePlus,
   Dumbbell,
@@ -92,6 +93,15 @@ function formatRunningLabel(
   fallback = "Sin dato",
 ) {
   return value === "--" ? fallback : value;
+}
+
+function splitRangeLabel(value: string) {
+  const [start, end] = value.split(" - ");
+
+  return {
+    start: start ?? value,
+    end: end ?? value,
+  };
 }
 
 export function ModeTrainApp(props: {
@@ -196,10 +206,12 @@ function HomeScreen(props: {
   completionMessage: string | null;
   onNavigate: (tab: TabKey) => void;
 }) {
+  const routineCards = props.snapshot.routines.slice(0, 3);
+
   return (
-    <div className="mt-screen">
-      <section className="mt-dashboard-card">
-        <div className="mt-dashboard-card__top">
+    <div className="mt-screen mt-screen--home">
+      <section className="mt-home-analytics">
+        <div className="mt-home-analytics__greeting">
           <div className="mt-greeting">
             <div className="mt-greeting__avatar">{props.user.initials}</div>
             <div>
@@ -210,34 +222,82 @@ function HomeScreen(props: {
               </h2>
             </div>
           </div>
-          <span className="mt-notification-badge">
-            {props.snapshot.schedule.todayEntries.length}
-          </span>
+          <button
+            type="button"
+            className="mt-home-analytics__bell"
+            aria-label="Ir a agenda"
+            onClick={() => props.onNavigate("agenda")}
+          >
+            <span className="mt-home-analytics__bell-count">
+              {props.snapshot.schedule.todayEntries.length}
+            </span>
+            <Bell size={16} strokeWidth={2.2} />
+          </button>
         </div>
 
-        <div className="mt-dashboard-card__meta">
+        <div className="mt-home-analytics__current">
           <div>
-            <span>Modo actual</span>
-            <strong>{props.snapshot.goalLabel}</strong>
+            <span>Actual</span>
+            <strong>{props.snapshot.routines.length} rutinas listas</strong>
           </div>
-          <div className="mt-level-pill">{props.snapshot.levelLabel}</div>
+          <div className="mt-home-analytics__cluster" aria-hidden="true">
+            <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--violet" />
+            <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--lime" />
+            <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--pink" />
+            <Link href="/app/routines" className="mt-home-analytics__cluster-link">
+              Add +
+            </Link>
+          </div>
         </div>
 
-        <div className="mt-ring-grid">
+        <div className="mt-home-period">
+          <button type="button" className="mt-home-period__control" aria-label="Periodo anterior">
+            <ChevronLeft size={16} strokeWidth={2.2} />
+          </button>
+          <div className="mt-home-period__label">Para esta semana</div>
+          <button type="button" className="mt-home-period__control" aria-label="Periodo siguiente">
+            <ChevronRight size={16} strokeWidth={2.2} />
+          </button>
+        </div>
+
+        <div className="mt-ring-grid mt-ring-grid--hero">
           {props.snapshot.focusMetrics.map((metric) => (
             <RingMetric key={metric.key} metric={metric} />
           ))}
         </div>
 
-        <div className="mt-week-strip">
+        <div className="mt-home-analytics__actions">
+          <button
+            type="button"
+            className="mt-home-inline-action"
+            onClick={() => props.onNavigate("agenda")}
+          >
+            <CalendarDays size={16} strokeWidth={2.2} />
+            Agenda
+          </button>
+          <button
+            type="button"
+            className="mt-home-inline-action mt-home-inline-action--accent"
+            onClick={() => props.onNavigate("summary")}
+          >
+            <Activity size={16} strokeWidth={2.2} />
+            Resumen
+          </button>
+        </div>
+
+        <div className="mt-week-strip mt-week-strip--hero">
           {props.snapshot.schedule.days.map((day) => (
             <button
               key={day.isoDate}
               type="button"
-              className={cn("mt-week-dot", day.isToday && "mt-week-dot--today")}
+              className={cn(
+                "mt-week-dot",
+                day.isToday && "mt-week-dot--today",
+                day.plannedCount + day.completedCount > 0 && "mt-week-dot--filled",
+              )}
               onClick={() => props.onNavigate("agenda")}
             >
-              <span className="mt-week-dot__count">{day.plannedCount}</span>
+              <span className="mt-week-dot__count">{day.plannedCount + day.completedCount}</span>
               <span className="mt-week-dot__ring" />
               <span className="mt-week-dot__label">{day.dayShort}</span>
             </button>
@@ -249,143 +309,114 @@ function HomeScreen(props: {
         <div className="mt-inline-note">{props.completionMessage}</div>
       ) : null}
 
-      <section className="mt-focus-card">
-        <div className="mt-focus-card__art">
-          <Image
-            src="/media/anatomy-mannequin.svg"
-            alt="Anatomia"
-            fill
-            sizes="(max-width: 768px) 100vw, 40vw"
-            className="mt-focus-card__image"
-          />
-          <div className="mt-focus-card__veil" />
+      <section className="mt-program-board">
+        <div className="mt-program-board__head">
+          <div>
+            <span>Rutinas guardadas</span>
+            <strong>{routineCards.length > 0 ? "Tus bloques listos para usar" : "Todavia no hay plantillas"}</strong>
+          </div>
+          <Link href="/app/routines">Ver todas</Link>
         </div>
 
-        <div className="mt-focus-card__content">
-          <div className="mt-focus-card__head">
-            <span className="mt-chip mt-chip--violet">Rutina principal</span>
-            <span className="mt-chip mt-chip--lime">
-              {props.snapshot.activeWorkoutSummary
-                ? `${props.snapshot.activeWorkoutSummary.completedExercises}/${props.snapshot.activeWorkoutSummary.totalExercises}`
-                : props.snapshot.defaultRoutine
-                  ? "Lista"
-                  : "Sin rutina"}
-            </span>
-          </div>
-
-          <div className="mt-focus-card__copy">
-            <p className="mt-kicker">En foco</p>
-            <h3>
-              {props.snapshot.activeWorkoutSummary
-                ? props.snapshot.activeWorkoutSummary.routineName
-                : props.snapshot.defaultRoutine?.name ?? "Crea tu primera rutina"}
-            </h3>
-            <p>
-              {props.snapshot.activeWorkoutSummary
-                ? `Guardaste ${props.snapshot.activeWorkoutSummary.savedSets} sets y puedes seguir donde lo dejaste.`
-                : props.snapshot.defaultRoutine
-                  ? "Usaremos la rutina agendada de hoy como seleccion predeterminada cuando vayas a entrenar."
-                  : "Empieza creando una plantilla y dejala lista para agendarla en tu semana."}
-            </p>
-          </div>
-
-          <div className="mt-focus-card__actions">
-            {props.snapshot.activeWorkoutSummary ? (
-              <Link
-                href={`/app/workouts/${props.snapshot.activeWorkoutSummary.sessionId}`}
-                className="mt-primary-pill"
-              >
-                <span className="mt-primary-pill__play" />
-                Reanudar
-              </Link>
-            ) : props.snapshot.defaultRoutine ? (
-              <StartWorkoutButton
-                routineTemplateId={props.snapshot.defaultRoutine.id}
-                label="Entrenar"
-                className="mt-primary-pill"
+        {routineCards.length > 0 ? (
+          <div className="mt-program-board__stack">
+            {routineCards.map((routine, index) => (
+              <RoutineShowcaseCard
+                key={routine.id}
+                routine={routine}
+                highlight={index === 0}
+                compact={index > 0}
+                isActive={props.snapshot.activeWorkoutSummary?.routineId === routine.id}
+                levelLabel={props.snapshot.levelLabel}
+                goalLabel={props.snapshot.goalLabel}
+                activeSessionId={
+                  props.snapshot.activeWorkoutSummary?.routineId === routine.id
+                    ? props.snapshot.activeWorkoutSummary.sessionId
+                    : null
+                }
               />
-            ) : (
-              <Link href="/app/routines" className="mt-primary-pill">
-                <span className="mt-primary-pill__play" />
-                Crear rutina
-              </Link>
-            )}
-
-            <Link href="/app/routines" className="mt-secondary-pill">
-              Gestionar rutinas
-            </Link>
+            ))}
           </div>
-        </div>
-      </section>
-
-      <section className="mt-home-grid">
-        <button
-          type="button"
-          className="mt-mini-panel"
-          onClick={() => props.onNavigate("agenda")}
-        >
-          <div className="mt-mini-panel__icon">
-            <CalendarDays size={18} strokeWidth={2.2} />
-          </div>
-          <div>
-            <p>Agenda</p>
-            <span>
-              {props.snapshot.schedule.todayEntries.length > 0
-                ? `${props.snapshot.schedule.todayEntries.length} para hoy`
-                : "Sin plan hoy"}
-            </span>
-          </div>
-          <ChevronRight size={16} strokeWidth={2.2} />
-        </button>
-
-        <button
-          type="button"
-          className="mt-mini-panel"
-          onClick={() => props.onNavigate("summary")}
-        >
-          <div className="mt-mini-panel__icon">
-            <Activity size={18} strokeWidth={2.2} />
-          </div>
-          <div>
-            <p>Resumen</p>
-            <span>{props.snapshot.summary.gym.month.highlight} movidos este mes</span>
-          </div>
-          <ChevronRight size={16} strokeWidth={2.2} />
-        </button>
-      </section>
-
-      <section className="mt-list-section">
-        <div className="mt-section-head">
-          <span>Hoy</span>
-          <button type="button" onClick={() => props.onNavigate("agenda")}>
-            Ver agenda
-          </button>
-        </div>
-
-        {props.snapshot.schedule.todayEntries.length > 0 ? (
-          props.snapshot.schedule.todayEntries.map((entry) => (
-            <article key={entry.id} className="mt-agenda-row">
-              <div className={cn("mt-agenda-row__icon", entry.entryType === "gym" ? "mt-agenda-row__icon--violet" : "mt-agenda-row__icon--lime")}>
-                {entry.entryType === "gym" ? (
-                  <Dumbbell size={16} strokeWidth={2.2} />
-                ) : (
-                  <Footprints size={16} strokeWidth={2.2} />
-                )}
-              </div>
-              <div className="mt-agenda-row__copy">
-                <strong>{entry.title}</strong>
-                <span>{entry.meta}</span>
-              </div>
-            </article>
-          ))
         ) : (
           <div className="mt-empty-panel">
-            <strong>Semana despejada</strong>
-            <span>Planifica gym o running en Agenda para tenerlo siempre a mano.</span>
+            <strong>Sin rutinas todavia</strong>
+            <span>Crea una plantilla y la dejaremos lista para agenda y registro.</span>
           </div>
         )}
       </section>
     </div>
+  );
+}
+
+function RoutineShowcaseCard(props: {
+  routine: AppSnapshot["routines"][number];
+  highlight: boolean;
+  compact: boolean;
+  isActive: boolean;
+  levelLabel: string;
+  goalLabel: string;
+  activeSessionId: string | null;
+}) {
+  const description =
+    props.routine.itemCount > 0
+      ? `${props.routine.itemCount} ejercicios listos para ${props.goalLabel.toLowerCase()}.`
+      : "Plantilla vacia, preparada para completarla con tu pool de ejercicios.";
+
+  return (
+    <article
+      className={cn(
+        "mt-program-card",
+        props.highlight && "mt-program-card--highlight",
+        props.compact && "mt-program-card--compact",
+      )}
+    >
+      <div className="mt-program-card__art">
+        <Image
+          src="/media/anatomy-mannequin.svg"
+          alt="Programa"
+          fill
+          sizes="(max-width: 768px) 100vw, 40vw"
+          className="mt-program-card__image"
+        />
+      </div>
+      <div className="mt-program-card__veil" />
+
+      <div className="mt-program-card__inner">
+        <div className="mt-program-card__top">
+          <span className={cn("mt-chip", props.highlight ? "mt-chip--violet" : "mt-chip--ghost")}>
+            {props.levelLabel}
+          </span>
+          <span className="mt-chip mt-chip--lime">
+            {props.routine.itemCount > 0 ? `${props.routine.itemCount} ejercicios` : "Vacia"}
+          </span>
+        </div>
+
+        <div className="mt-program-card__copy">
+          <p className="mt-kicker">Bloque curado</p>
+          <h3>{props.routine.name}</h3>
+          <p>{props.compact ? props.goalLabel : description}</p>
+        </div>
+
+        <div className="mt-program-card__footer">
+          {props.isActive && props.activeSessionId ? (
+            <Link href={`/app/workouts/${props.activeSessionId}`} className="mt-primary-pill mt-primary-pill--compact">
+              <span className="mt-primary-pill__play" />
+              Continuar
+            </Link>
+          ) : (
+            <Link href={`/app/routines/${props.routine.id}`} className="mt-primary-pill mt-primary-pill--compact">
+              <span className="mt-primary-pill__play" />
+              Abrir
+            </Link>
+          )}
+
+          <div className="mt-program-card__badge">
+            <strong>{props.routine.itemCount}</strong>
+            <span>items</span>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -397,6 +428,9 @@ function AgendaScreen(props: {
     props.snapshot.schedule.days[0]?.isoDate ??
     "";
   const [selectedDate, setSelectedDate] = useState(selectedInitialDate);
+  const [composerMode, setComposerMode] = useState<
+    "plan-gym" | "plan-running" | "log-gym" | "log-running"
+  >("plan-gym");
   const selectedDay =
     props.snapshot.schedule.days.find((day) => day.isoDate === selectedDate) ??
     props.snapshot.schedule.days[0];
@@ -453,11 +487,44 @@ function AgendaScreen(props: {
         </div>
       </section>
 
-      <section className="mt-form-stack">
-        <ScheduleGymCard snapshot={props.snapshot} selectedDate={selectedDate} />
-        <ScheduleRunCard selectedDate={selectedDate} />
-        <GymLogCard snapshot={props.snapshot} selectedDate={selectedDate} />
-        <RunLogCard selectedDate={selectedDate} />
+      <section className="mt-agenda-composer">
+        <div className="mt-agenda-composer__tabs">
+          {[
+            { key: "plan-gym", label: "Plan gym" },
+            { key: "plan-running", label: "Plan run" },
+            { key: "log-gym", label: "Gym hecho" },
+            { key: "log-running", label: "Run hecho" },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={cn(
+                "mt-agenda-composer__tab",
+                composerMode === item.key && "mt-agenda-composer__tab--active",
+              )}
+              onClick={() =>
+                setComposerMode(item.key as "plan-gym" | "plan-running" | "log-gym" | "log-running")
+              }
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-agenda-composer__panel">
+          {composerMode === "plan-gym" ? (
+            <ScheduleGymCard snapshot={props.snapshot} selectedDate={selectedDate} />
+          ) : null}
+          {composerMode === "plan-running" ? (
+            <ScheduleRunCard selectedDate={selectedDate} />
+          ) : null}
+          {composerMode === "log-gym" ? (
+            <GymLogCard snapshot={props.snapshot} selectedDate={selectedDate} />
+          ) : null}
+          {composerMode === "log-running" ? (
+            <RunLogCard selectedDate={selectedDate} />
+          ) : null}
+        </div>
       </section>
     </div>
   );
@@ -466,6 +533,7 @@ function AgendaScreen(props: {
 function SummaryScreen(props: {
   snapshot: AppSnapshot;
 }) {
+  const weekRange = splitRangeLabel(props.snapshot.schedule.weekRangeLabel);
   const [mode, setMode] = useState<"general" | "body" | "running">("body");
   const [scope, setScope] = useState<"week" | "month" | "total">("month");
   const [selectedGymRecordId, setSelectedGymRecordId] = useState(
@@ -487,14 +555,17 @@ function SummaryScreen(props: {
           </div>
         </div>
 
-        <div className="mt-range-row">
+        <div className="mt-range-row mt-range-row--analytics">
           <div className="mt-range-pill">
             <CalendarDays size={15} strokeWidth={2.2} />
-            <span>{props.snapshot.schedule.weekRangeLabel}</span>
+            <span>{weekRange.start}</span>
           </div>
-          <div className="mt-range-pill mt-range-pill--ghost">
-            <Target size={15} strokeWidth={2.2} />
-            <span>{props.snapshot.goalLabel}</span>
+          <div className="mt-range-pill mt-range-pill--cross" aria-hidden="true">
+            ×
+          </div>
+          <div className="mt-range-pill">
+            <CalendarDays size={15} strokeWidth={2.2} />
+            <span>{weekRange.end}</span>
           </div>
         </div>
 
@@ -586,21 +657,41 @@ function SummaryScreen(props: {
 
         {mode === "body" ? (
           <div className="mt-summary-stack">
-            <section className="mt-body-analytics">
-              <div className="mt-body-analytics__art">
+            <section className="mt-body-stage">
+              <div className="mt-body-stage__art">
                 <Image
                   src="/media/anatomy-mannequin.svg"
                   alt="Anatomia muscular"
                   fill
                   sizes="(max-width: 768px) 100vw, 44vw"
-                  className="mt-body-analytics__image"
+                  className="mt-body-stage__image"
                 />
+
+                <div className="mt-body-stage__overlay" />
+
+                {selectedGymRecord ? (
+                  <div className="mt-body-stage__measure">
+                    <div>
+                      <strong>{selectedGymRecord.exerciseName}</strong>
+                      <span>{selectedGymRecord.dateLabel}</span>
+                    </div>
+                    <em>{selectedGymRecord.weightLabel}</em>
+                  </div>
+                ) : null}
               </div>
 
-              <div className="mt-body-analytics__list">
+              <div className="mt-body-stage__list">
                 {props.snapshot.summary.gymRecords.length > 0 ? (
                   props.snapshot.summary.gymRecords.slice(0, 6).map((record) => (
-                    <button key={record.exerciseId} type="button" className="mt-body-analytics__row">
+                    <button
+                      key={record.exerciseId}
+                      type="button"
+                      className={cn(
+                        "mt-body-stage__row",
+                        selectedGymRecord?.exerciseId === record.exerciseId && "mt-body-stage__row--active",
+                      )}
+                      onClick={() => setSelectedGymRecordId(record.exerciseId)}
+                    >
                       <span>{record.exerciseName}</span>
                       <strong>{record.weightLabel}</strong>
                     </button>
@@ -1142,6 +1233,7 @@ function GymSubmitButton(props: {
 function RingMetric(props: {
   metric: AppSnapshot["focusMetrics"][number];
 }) {
+  const Icon = props.metric.key === "gym" ? Dumbbell : props.metric.key === "running" ? Footprints : Target;
   const progress = useMemo(() => {
     if (props.metric.key === "running") {
       const parsed = Number(String(props.metric.value).replace(/[^\d.]/g, ""));
@@ -1169,6 +1261,9 @@ function RingMetric(props: {
           strokeDashoffset={dashOffset}
         />
       </svg>
+      <span className="mt-ring-card__icon" aria-hidden="true">
+        <Icon size={18} strokeWidth={2.2} />
+      </span>
       <div className="mt-ring-card__copy">
         <strong>{props.metric.value}</strong>
         <span>{props.metric.label}</span>
