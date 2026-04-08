@@ -229,7 +229,6 @@ async function getGymRecords(userId: string) {
   }
 
   return Array.from(records.values())
-    .slice(0, 8)
     .map((record) => ({
       exerciseId: record.exerciseId,
       exerciseName: record.exerciseName,
@@ -239,7 +238,8 @@ async function getGymRecords(userId: string) {
         : record.finishedAt
           ? formatDate(record.finishedAt)
           : "--",
-    }));
+    }))
+    .sort((left, right) => left.exerciseName.localeCompare(right.exerciseName, "es-ES"));
 }
 
 async function getRunningRecords(userId: string) {
@@ -336,7 +336,7 @@ async function getRecentActivity(userId: string) {
       title: row.distanceKm ? `Running · ${formatDistance(row.distanceKm)}` : "Running libre",
       meta: row.averagePaceSeconds ? formatPace(row.averagePaceSeconds) : "Sin ritmo registrado",
       dateLabel: formatDate(row.date),
-      href: "/app/history",
+      href: `/app/history/runs/${row.id}`,
       sortAt: row.date,
     })),
   ]

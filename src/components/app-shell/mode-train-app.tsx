@@ -468,6 +468,14 @@ function SummaryScreen(props: {
 }) {
   const [mode, setMode] = useState<"general" | "body" | "running">("body");
   const [scope, setScope] = useState<"week" | "month" | "total">("month");
+  const [selectedGymRecordId, setSelectedGymRecordId] = useState(
+    props.snapshot.summary.gymRecords[0]?.exerciseId ?? "",
+  );
+
+  const selectedGymRecord =
+    props.snapshot.summary.gymRecords.find((record) => record.exerciseId === selectedGymRecordId) ??
+    props.snapshot.summary.gymRecords[0] ??
+    null;
 
   return (
     <div className="mt-screen">
@@ -611,7 +619,34 @@ function SummaryScreen(props: {
                 <h3>Records por ejercicio</h3>
               </div>
               {props.snapshot.summary.gymRecords.length > 0 ? (
-                props.snapshot.summary.gymRecords.map((record) => (
+                <>
+                  <label className="mt-field">
+                    <span>Ejercicio</span>
+                    <select
+                      value={selectedGymRecord?.exerciseId ?? ""}
+                      onChange={(event) => setSelectedGymRecordId(event.target.value)}
+                    >
+                      {props.snapshot.summary.gymRecords.map((record) => (
+                        <option key={record.exerciseId} value={record.exerciseId}>
+                          {record.exerciseName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {selectedGymRecord ? (
+                    <div className="mt-record-row mt-record-row--feature">
+                      <div>
+                        <strong>{selectedGymRecord.exerciseName}</strong>
+                        <span>Serie mas pesada registrada el {selectedGymRecord.dateLabel}</span>
+                      </div>
+                      <em>{selectedGymRecord.weightLabel}</em>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+              {props.snapshot.summary.gymRecords.length > 0 ? (
+                props.snapshot.summary.gymRecords.slice(0, 6).map((record) => (
                   <div key={record.exerciseId} className="mt-record-row">
                     <div>
                       <strong>{record.exerciseName}</strong>

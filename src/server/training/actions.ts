@@ -13,7 +13,6 @@ import {
   routineTemplateItems,
   routineTemplates,
   runningKindEnum,
-  runningSessions,
   scheduleEntryTypeEnum,
   trainingScheduleEntries,
 } from "@/server/db/schema";
@@ -23,6 +22,10 @@ import {
   getRoutineItemCount,
   normalizeRoutineItemSortOrder,
 } from "@/server/training/routines";
+import {
+  createRunningSession,
+  updateRunningSession,
+} from "@/server/training/running";
 import { createStarterWeek } from "@/server/training/starter-plan";
 import type {
   RoutineActionState,
@@ -70,6 +73,10 @@ const runningLogSchema = z.object({
   distanceKm: z.union([z.coerce.number().min(0.5).max(250), z.nan()]).optional(),
   durationMinutes: z.union([z.coerce.number().int().min(1).max(1440), z.nan()]).optional(),
   notes: z.string().trim().max(240).optional().default(""),
+});
+
+const runningUpdateSchema = runningLogSchema.extend({
+  sessionId: z.string().uuid("La carrera seleccionada no es valida."),
 });
 
 const customExerciseSchema = z.object({
@@ -734,7 +741,6 @@ export async function logRunningSessionAction(
   try {
     void previousState;
     const user = await requireUser();
-    const db = getDb();
     const parsed = runningLogSchema.parse({
       kind: String(formData.get("kind") ?? ""),
       date: String(formData.get("date") ?? ""),
@@ -757,19 +763,11 @@ export async function logRunningSessionAction(
       throw new Error("Anade al menos distancia o duracion para guardar la carrera.");
     }
 
-    const durationSeconds = durationMinutes !== null ? durationMinutes * 60 : null;
-    const averagePaceSeconds =
-      durationSeconds !== null && distanceKm !== null && distanceKm > 0
-        ? Math.round(durationSeconds / distanceKm)
-        : null;
-
-    await db.insert(runningSessions).values({
-      userId: user.id,
+    await createRunningSession(user.id, {
       kind: parsed.kind,
-      date: new Date(`${parsed.date}T12:00:00`),
+      date: parsed.date,
       distanceKm,
-      durationSeconds,
-      averagePaceSeconds,
+      durationMinutes,
       notes: parsed.notes,
     });
 
@@ -784,6 +782,57 @@ export async function logRunningSessionAction(
   } catch (error) {
     return {
       error: toActionError(error, "No se ha podido guardar la carrera."),
+      success: null,
+    };
+  }
+}
+
+export async function updateRunningSessionAction(
+  previousState: RunLogActionState,
+  formData: FormData,
+): Promise<RunLogActionState> {
+  try {
+    void previousState;
+    const user = await requireUser();
+    const parsed = runningUpdateSchema.parse({
+      sessionId: String(formData.get("sessionId") ?? ""),
+      kind: String(formData.get("kind") ?? ""),
+      date: String(formData.get("date") ?? ""),
+      distanceKm: formData.get("distanceKm") === "" ? undefined : formData.get("distanceKm"),
+      durationMinutes:
+        formData.get("durationMinutes") === "" ? undefined : formData.get("durationMinutes"),
+      notes: String(formData.get("notes") ?? ""),
+    });
+
+    const distanceKm =
+      parsed.distanceKm === undefined || Number.isNaN(parsed.distanceKm)
+        ? null
+        : parsed.distanceKm;
+    const durationMinutes =
+      parsed.durationMinutes === undefined || Number.isNaN(parsed.durationMinutes)
+        ? null
+        : parsed.durationMinutes;
+
+    await updateRunningSession(user.id, parsed.sessionId, {
+      kind: parsed.kind,
+      date: parsed.date,
+      distanceKm,
+      durationMinutes,
+      notes: parsed.notes,
+    });
+
+    revalidatePath("/app");
+    revalidatePath("/app/history");
+    revalidatePath(`/app/history/runs/${parsed.sessionId}`);
+    revalidatePath("/app/progress");
+
+    return {
+      error: null,
+      success: "Carrera actualizada.",
+    };
+  } catch (error) {
+    return {
+      error: toActionError(error, "No se ha podido actualizar la carrera."),
       success: null,
     };
   }

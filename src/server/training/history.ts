@@ -5,10 +5,16 @@ import {
   exercises,
   routineTemplateItems,
   routineTemplates,
-  runningSessions,
   workoutSessions,
   workoutSets,
 } from "@/server/db/schema";
+import { runningSessions } from "@/server/db/schema";
+import {
+  formatRunningKind,
+  formatRunningPace,
+  getRunningHistoryDetail as getRunningHistoryDetailBase,
+  type RunningHistoryDetail,
+} from "@/server/training/running";
 
 export type TrainingHistoryEntry = {
   id: string;
@@ -58,6 +64,8 @@ export type WorkoutHistoryDetail = {
   exercises: WorkoutHistoryExercise[];
 };
 
+export type { RunningHistoryDetail };
+
 function normalizeText(value: string) {
   return value
     .trim()
@@ -97,34 +105,6 @@ function formatVolume(volumeKg: number) {
   return new Intl.NumberFormat("es-ES", {
     maximumFractionDigits: volumeKg % 1 === 0 ? 0 : 1,
   }).format(volumeKg);
-}
-
-function formatPace(seconds: number | null) {
-  if (!seconds || seconds <= 0) {
-    return null;
-  }
-
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}/km`;
-}
-
-function formatRunningKind(kind: string) {
-  switch (kind) {
-    case "easy":
-      return "Rodaje suave";
-    case "tempo":
-      return "Tempo";
-    case "intervals":
-      return "Series";
-    case "long_run":
-      return "Tirada larga";
-    case "recovery":
-      return "Recuperacion";
-    default:
-      return "Libre";
-  }
 }
 
 function formatMuscleGroup(group: string) {
@@ -280,11 +260,11 @@ export async function getHistoryOverview(userId: string): Promise<HistoryOvervie
       id: run.id,
       kind: "run" as const,
       title: run.distanceKm !== null ? `${run.distanceKm.toFixed(1)} km` : "Running libre",
-      meta: [formatRunningKind(run.kind), formatPace(run.averagePaceSeconds)]
+      meta: [formatRunningKind(run.kind), formatRunningPace(run.averagePaceSeconds)]
         .filter(Boolean)
         .join(" · "),
       dateLabel: formatDate(run.date),
-      href: null,
+      href: `/app/history/runs/${run.id}`,
       sortAt: run.date,
     })),
   ]
@@ -316,6 +296,13 @@ export async function getHistoryOverview(userId: string): Promise<HistoryOvervie
     ],
     entries,
   };
+}
+
+export async function getRunningHistoryDetail(
+  userId: string,
+  runId: string,
+): Promise<RunningHistoryDetail | null> {
+  return getRunningHistoryDetailBase(userId, runId);
 }
 
 export async function getWorkoutHistoryDetail(
