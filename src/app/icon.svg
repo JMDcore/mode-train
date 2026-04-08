@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="mt-gradient" x1="12%" y1="8%" x2="88%" y2="92%">
+      <stop offset="0%" stop-color="#d8b4fe" />
+      <stop offset="52%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#6d28d9" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#0b0714" />
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="none" stroke="rgba(255,255,255,0.12)" />
+  <path
+    d="M28 94V34h12l24 28 24-28h12v60H88V54L66 79h-4L40 54v40Z"
+    fill="url(#mt-gradient)"
+  />
+</svg>

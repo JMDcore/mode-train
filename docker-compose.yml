@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: modetrain-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mode_train}
+      POSTGRES_USER: ${POSTGRES_USER:-mode_train}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mode_train_dev_password}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    volumes:
+      - modetrain_db_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  mode-train:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: modetrain
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_URL: ${APP_URL:-https://train.jmdcore.com}
+      DATABASE_URL: postgres://${POSTGRES_USER:-mode_train}:${POSTGRES_PASSWORD:-mode_train_dev_password}@db:5432/${POSTGRES_DB:-mode_train}
+      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:-replace-me}
+      FILES_DIR: ${FILES_DIR:-/app/storage}
+    volumes:
+      - modetrain_storage:/app/storage
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks:
+      - edge
+      - internal
+
+volumes:
+  modetrain_db_data:
+  modetrain_storage:
+
+networks:
+  edge:
+    external: true
+  internal:
