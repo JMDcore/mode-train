@@ -141,6 +141,7 @@ export async function getScheduleOverview(userId: string, anchorDate = new Date(
 
   const completedWorkouts = await db
     .select({
+      performedOn: workoutSessions.performedOn,
       finishedAt: workoutSessions.finishedAt,
     })
     .from(workoutSessions)
@@ -165,11 +166,11 @@ export async function getScheduleOverview(userId: string, anchorDate = new Date(
   const completedCountByDay = new Map<string, number>();
 
   for (const workout of completedWorkouts) {
-    if (!workout.finishedAt) {
+    const iso = workout.performedOn ?? (workout.finishedAt ? toIsoDate(workout.finishedAt) : null);
+
+    if (!iso) {
       continue;
     }
-
-    const iso = toIsoDate(workout.finishedAt);
     if (iso < startIso || iso > endIso) {
       continue;
     }

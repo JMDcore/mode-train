@@ -51,6 +51,14 @@ const routineSchema = z.object({
 
 const routineLaunchSchema = z.object({
   routineTemplateId: z.string().uuid("La rutina seleccionada no es valida."),
+  sessionDate: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || "")
+    .refine((value) => value === "" || /^\d{4}-\d{2}-\d{2}$/.test(value), {
+      message: "Selecciona una fecha valida para el entreno.",
+    }),
 });
 
 const runningLogSchema = z.object({
@@ -372,16 +380,21 @@ export async function startWorkoutSessionAction(
     const user = await requireUser();
     const parsed = routineLaunchSchema.parse({
       routineTemplateId: String(formData.get("routineTemplateId") ?? ""),
+      sessionDate: String(formData.get("sessionDate") ?? ""),
     });
 
-    const session = await startOrResumeWorkoutSession(user.id, parsed.routineTemplateId);
+    const session = await startOrResumeWorkoutSession(
+      user.id,
+      parsed.routineTemplateId,
+      parsed.sessionDate || undefined,
+    );
 
     revalidatePath("/app");
     revalidatePath(`/app/workouts/${session.sessionId}`);
 
     return createWorkoutLaunchState(
       null,
-      session.resumed ? "Sesion reanudada." : "Sesion iniciada.",
+      session.resumed ? "Sesion reanudada." : "Sesion preparada.",
       `/app/workouts/${session.sessionId}`,
       session.resumed,
       parsed.routineTemplateId,

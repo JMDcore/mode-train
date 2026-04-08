@@ -47,6 +47,7 @@ export type WorkoutHistoryDetail = {
   sessionId: string;
   routineId: string | null;
   routineName: string;
+  performedOn: string;
   startedAt: Date;
   finishedAt: Date;
   dateLabel: string;
@@ -72,14 +73,11 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+function formatIsoDate(isoDate: string) {
+  return formatDate(new Date(`${isoDate}T12:00:00`));
 }
+
+const workoutEffectiveDateSql = sql`coalesce(${workoutSessions.performedOn}::timestamp, ${workoutSessions.finishedAt})`;
 
 function formatDuration(startedAt: Date, finishedAt: Date) {
   const diffMs = Math.max(0, finishedAt.getTime() - startedAt.getTime());
@@ -208,7 +206,7 @@ export async function getHistoryOverview(userId: string): Promise<HistoryOvervie
       and(
         eq(workoutSessions.userId, userId),
         isNotNull(workoutSessions.finishedAt),
-        sql`${workoutSessions.finishedAt} >= ${thirtyDaysAgo}`,
+        sql`${workoutEffectiveDateSql} >= ${thirtyDaysAgo}`,
       ),
     );
 
@@ -222,13 +220,14 @@ export async function getHistoryOverview(userId: string): Promise<HistoryOvervie
       and(
         eq(workoutSessions.userId, userId),
         isNotNull(workoutSessions.finishedAt),
-        sql`${workoutSessions.finishedAt} >= ${thirtyDaysAgo}`,
+        sql`${workoutEffectiveDateSql} >= ${thirtyDaysAgo}`,
       ),
     );
 
   const workouts = await db
     .select({
       id: workoutSessions.id,
+      performedOn: workoutSessions.performedOn,
       finishedAt: workoutSessions.finishedAt,
       routineName: routineTemplates.name,
       setCount: count(workoutSets.id),
@@ -245,7 +244,7 @@ export async function getHistoryOverview(userId: string): Promise<HistoryOvervie
       ),
     )
     .groupBy(workoutSessions.id, routineTemplates.name)
-    .orderBy(desc(workoutSessions.finishedAt))
+    .orderBy(desc(workoutEffectiveDateSql))
     .limit(18);
 
   const runs = await db
@@ -273,9 +272,9 @@ export async function getHistoryOverview(userId: string): Promise<HistoryOvervie
       ]
         .filter(Boolean)
         .join(" · "),
-      dateLabel: formatDate(workout.finishedAt ?? new Date()),
+      dateLabel: formatIsoDate(workout.performedOn),
       href: `/app/history/workouts/${workout.id}`,
-      sortAt: workout.finishedAt ?? new Date(),
+      sortAt: new Date(`${workout.performedOn}T12:00:00`),
     })),
     ...runs.map((run) => ({
       id: run.id,
@@ -329,6 +328,7 @@ export async function getWorkoutHistoryDetail(
     .select({
       id: workoutSessions.id,
       routineTemplateId: workoutSessions.routineTemplateId,
+      performedOn: workoutSessions.performedOn,
       startedAt: workoutSessions.startedAt,
       finishedAt: workoutSessions.finishedAt,
       routineName: routineTemplates.name,
@@ -443,9 +443,10 @@ export async function getWorkoutHistoryDetail(
     sessionId: session.id,
     routineId: session.routineTemplateId,
     routineName: session.routineName ?? "Sesion de fuerza",
+    performedOn: session.performedOn,
     startedAt: session.startedAt,
     finishedAt: session.finishedAt,
-    dateLabel: formatDateTime(session.finishedAt),
+    dateLabel: formatIsoDate(session.performedOn),
     durationLabel: formatDuration(session.startedAt, session.finishedAt),
     savedSets: setRows.length,
     exerciseCount: exercisesByOrder.length,

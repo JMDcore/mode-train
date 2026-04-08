@@ -13,6 +13,8 @@ export type ActiveWorkoutSummary = {
   sessionId: string;
   routineId: string | null;
   routineName: string;
+  performedOn: string;
+  performedOnLabel: string;
   startedAtLabel: string;
   completedExercises: number;
   totalExercises: number;
@@ -44,6 +46,8 @@ export type WorkoutSessionDetail = {
   sessionId: string;
   routineId: string | null;
   routineName: string;
+  performedOn: string;
+  performedOnLabel: string;
   startedAt: Date;
   startedAtLabel: string;
   finishedAtLabel: string | null;
@@ -61,6 +65,20 @@ function formatStartedAt(date: Date) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function toIsoDate(input: Date) {
+  const year = input.getFullYear();
+  const month = String(input.getMonth() + 1).padStart(2, "0");
+  const day = String(input.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatPerformedOn(isoDate: string) {
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+  }).format(new Date(`${isoDate}T12:00:00`));
 }
 
 function formatLastPerformance(input: {
@@ -97,6 +115,7 @@ export async function findOpenWorkoutSessionForUser(userId: string) {
     .select({
       id: workoutSessions.id,
       routineTemplateId: workoutSessions.routineTemplateId,
+      performedOn: workoutSessions.performedOn,
       startedAt: workoutSessions.startedAt,
       routineName: routineTemplates.name,
     })
@@ -114,11 +133,21 @@ export async function findOpenWorkoutSessionForUser(userId: string) {
   return session ?? null;
 }
 
-export async function startOrResumeWorkoutSession(userId: string, routineId: string) {
+export async function startOrResumeWorkoutSession(
+  userId: string,
+  routineId: string,
+  performedOn = toIsoDate(new Date()),
+) {
   const db = getDb();
   const existingSession = await findOpenWorkoutSessionForUser(userId);
 
   if (existingSession) {
+    if (existingSession.routineTemplateId !== routineId) {
+      throw new Error(
+        `Ya tienes una sesion abierta${existingSession.routineName ? `: ${existingSession.routineName}` : ""}. Reanudala o cierrala antes de abrir otra.`,
+      );
+    }
+
     return {
       sessionId: existingSession.id,
       resumed: true,
@@ -159,6 +188,7 @@ export async function startOrResumeWorkoutSession(userId: string, routineId: str
     .values({
       userId,
       routineTemplateId: routine.id,
+      performedOn,
       notes: "",
     })
     .returning({
@@ -207,6 +237,8 @@ export async function getActiveWorkoutSummary(userId: string): Promise<ActiveWor
     sessionId: session.id,
     routineId: session.routineTemplateId,
     routineName: session.routineName ?? "Sesion de fuerza",
+    performedOn: session.performedOn,
+    performedOnLabel: formatPerformedOn(session.performedOn),
     startedAtLabel: formatStartedAt(session.startedAt),
     completedExercises: Number(savedExercisesRecord?.count ?? 0),
     totalExercises: Number(totalExercisesRecord?.count ?? 0),
@@ -255,6 +287,7 @@ export async function getWorkoutSessionDetail(
     .select({
       id: workoutSessions.id,
       routineTemplateId: workoutSessions.routineTemplateId,
+      performedOn: workoutSessions.performedOn,
       startedAt: workoutSessions.startedAt,
       finishedAt: workoutSessions.finishedAt,
       routineName: routineTemplates.name,
@@ -335,6 +368,8 @@ export async function getWorkoutSessionDetail(
     sessionId: session.id,
     routineId: session.routineTemplateId,
     routineName: session.routineName ?? "Sesion de fuerza",
+    performedOn: session.performedOn,
+    performedOnLabel: formatPerformedOn(session.performedOn),
     startedAt: session.startedAt,
     startedAtLabel: formatStartedAt(session.startedAt),
     finishedAtLabel: session.finishedAt ? formatStartedAt(session.finishedAt) : null,
@@ -441,6 +476,7 @@ export async function completeWorkoutSession(userId: string, sessionId: string) 
   const [session] = await db
     .select({
       id: workoutSessions.id,
+      performedOn: workoutSessions.performedOn,
       finishedAt: workoutSessions.finishedAt,
     })
     .from(workoutSessions)
@@ -474,6 +510,7 @@ export async function completeWorkoutSession(userId: string, sessionId: string) 
   await db
     .update(workoutSessions)
     .set({
+      performedOn: session.performedOn,
       finishedAt: new Date(),
     })
     .where(eq(workoutSessions.id, session.id));

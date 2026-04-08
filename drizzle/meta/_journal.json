@@ -15,6 +15,13 @@
       "when": 1775677782946,
       "tag": "0001_handy_ozymandias",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775681745410,
+      "tag": "0002_windy_firedrake",
+      "breakpoints": true
     }
   ]
 }

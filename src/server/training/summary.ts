@@ -44,6 +44,8 @@ export type SummaryOverview = {
 
 type TimeFilterKey = Exclude<SummaryScopeKey, "total">;
 
+const workoutEffectiveDateSql = sql`coalesce(${workoutSessions.performedOn}::timestamp, ${workoutSessions.finishedAt})`;
+
 function formatWeight(value: number | null) {
   if (value === null || value === undefined) {
     return "--";
@@ -88,6 +90,10 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+function formatIsoDate(isoDate: string) {
+  return formatDate(new Date(`${isoDate}T12:00:00`));
+}
+
 function getTimeFilters() {
   const now = new Date();
   const weekStart = new Date(now);
@@ -112,7 +118,7 @@ async function getGymScopeSummary(userId: string, since: Date | null): Promise<S
     ? and(
         eq(workoutSessions.userId, userId),
         isNotNull(workoutSessions.finishedAt),
-        sql`${workoutSessions.finishedAt} >= ${since}`,
+        sql`${workoutEffectiveDateSql} >= ${since}`,
       )
     : and(eq(workoutSessions.userId, userId), isNotNull(workoutSessions.finishedAt));
 
@@ -187,6 +193,7 @@ async function getGymRecords(userId: string) {
       exerciseId: workoutSets.exerciseId,
       exerciseName: exercises.name,
       weightKg: workoutSets.weightKg,
+      performedOn: workoutSessions.performedOn,
       finishedAt: workoutSessions.finishedAt,
     })
     .from(workoutSets)
@@ -199,16 +206,22 @@ async function getGymRecords(userId: string) {
         isNotNull(workoutSets.weightKg),
       ),
     )
-    .orderBy(desc(workoutSets.weightKg), desc(workoutSessions.finishedAt))
+    .orderBy(desc(workoutSets.weightKg), desc(workoutEffectiveDateSql))
     .limit(120);
 
   const records = new Map<
     string,
-    { exerciseId: string; exerciseName: string; weightKg: number | null; finishedAt: Date | null }
+    {
+      exerciseId: string;
+      exerciseName: string;
+      weightKg: number | null;
+      performedOn: string;
+      finishedAt: Date | null;
+    }
   >();
 
   for (const row of rows) {
-    if (!row.finishedAt || records.has(row.exerciseId)) {
+    if (records.has(row.exerciseId)) {
       continue;
     }
 
@@ -221,7 +234,11 @@ async function getGymRecords(userId: string) {
       exerciseId: record.exerciseId,
       exerciseName: record.exerciseName,
       weightLabel: formatWeight(record.weightKg),
-      dateLabel: record.finishedAt ? formatDate(record.finishedAt) : "--",
+      dateLabel: record.performedOn
+        ? formatIsoDate(record.performedOn)
+        : record.finishedAt
+          ? formatDate(record.finishedAt)
+          : "--",
     }));
 }
 
@@ -280,13 +297,14 @@ async function getRecentActivity(userId: string) {
   const workouts = await db
     .select({
       id: workoutSessions.id,
+      performedOn: workoutSessions.performedOn,
       finishedAt: workoutSessions.finishedAt,
       title: routineTemplates.name,
     })
     .from(workoutSessions)
     .leftJoin(routineTemplates, eq(routineTemplates.id, workoutSessions.routineTemplateId))
     .where(and(eq(workoutSessions.userId, userId), isNotNull(workoutSessions.finishedAt)))
-    .orderBy(desc(workoutSessions.finishedAt))
+    .orderBy(desc(workoutEffectiveDateSql))
     .limit(8);
 
   const runs = await db
@@ -303,15 +321,14 @@ async function getRecentActivity(userId: string) {
 
   const activity = [
     ...workouts
-      .filter((row) => row.finishedAt)
       .map((row) => ({
         id: row.id,
         kind: "workout" as const,
         title: row.title ? `Fuerza · ${row.title}` : "Sesion de fuerza",
         meta: "Entreno guardado",
-        dateLabel: formatDate(row.finishedAt as Date),
+        dateLabel: formatIsoDate(row.performedOn),
         href: "/app/history",
-        sortAt: row.finishedAt as Date,
+        sortAt: new Date(`${row.performedOn}T12:00:00`),
       })),
     ...runs.map((row) => ({
       id: row.id,

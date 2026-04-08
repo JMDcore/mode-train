@@ -7,12 +7,13 @@ import { getDb } from "../src/server/db";
 import { getDbPool } from "../src/server/db/client";
 import {
   appUsers,
+  exercises,
   profiles,
   routineTemplateItems,
   routineTemplates,
 } from "../src/server/db/schema";
 import { getUserProfile } from "../src/server/profile";
-import { createStarterWeek } from "../src/server/training/starter-plan";
+import { getScheduleOverview } from "../src/server/training/schedule";
 import {
   completeWorkoutSession,
   getActiveWorkoutSummary,
@@ -48,23 +49,40 @@ async function main() {
       throw new Error("No se ha podido cargar el perfil de prueba.");
     }
 
-    await createStarterWeek({
-      userId: createdUser.id,
-      profile,
-    });
-
-    const [routine] = await db
+    const [exercise] = await db
       .select({
-        id: routineTemplates.id,
-        name: routineTemplates.name,
+        id: exercises.id,
       })
-      .from(routineTemplates)
-      .where(eq(routineTemplates.ownerUserId, createdUser.id))
+      .from(exercises)
+      .where(eq(exercises.isSystem, true))
       .limit(1);
 
-    if (!routine) {
-      throw new Error("No se ha generado ninguna rutina de prueba.");
+    if (!exercise) {
+      throw new Error("No hay ejercicios del sistema disponibles.");
     }
+
+    const [routine] = await db
+      .insert(routineTemplates)
+      .values({
+        ownerUserId: createdUser.id,
+        name: "Torso Smoke",
+      })
+      .returning({
+        id: routineTemplates.id,
+        name: routineTemplates.name,
+      });
+
+    await db.insert(routineTemplateItems).values({
+      routineTemplateId: routine.id,
+      exerciseId: exercise.id,
+      sortOrder: 0,
+      targetSets: 3,
+      targetRepsMin: 6,
+      targetRepsMax: 10,
+      targetRir: 2,
+      restSeconds: 90,
+      notes: "",
+    });
 
     const [firstItem] = await db
       .select({
@@ -78,8 +96,13 @@ async function main() {
       throw new Error("La rutina de prueba ha quedado vacia.");
     }
 
-    const started = await startOrResumeWorkoutSession(createdUser.id, routine.id);
-    const resumed = await startOrResumeWorkoutSession(createdUser.id, routine.id);
+    const performedOnDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    const performedOn = `${performedOnDate.getFullYear()}-${String(
+      performedOnDate.getMonth() + 1,
+    ).padStart(2, "0")}-${String(performedOnDate.getDate()).padStart(2, "0")}`;
+
+    const started = await startOrResumeWorkoutSession(createdUser.id, routine.id, performedOn);
+    const resumed = await startOrResumeWorkoutSession(createdUser.id, routine.id, performedOn);
 
     if (!resumed.resumed || resumed.sessionId !== started.sessionId) {
       throw new Error("La sesion no se ha reanudado correctamente.");
@@ -124,6 +147,10 @@ async function main() {
     const detailAfterComplete = await getWorkoutSessionDetail(createdUser.id, started.sessionId);
     const activeAfterComplete = await getActiveWorkoutSummary(createdUser.id);
     const refreshedProfile = await getUserProfile(createdUser.id);
+    const schedule = await getScheduleOverview(
+      createdUser.id,
+      new Date(`${performedOn}T12:00:00`),
+    );
 
     if (!refreshedProfile) {
       throw new Error("No se ha podido recargar el perfil tras cerrar la sesion.");
@@ -143,15 +170,23 @@ async function main() {
     if (
       detailAfterComplete === null ||
       !detailAfterComplete.isFinished ||
+      detailAfterComplete.performedOn !== performedOn ||
       activeAfterComplete !== null ||
       snapshot.summary.gym.total.sessions === "0 sesiones"
     ) {
       throw new Error("El cierre de sesion no se ha reflejado en el dashboard.");
     }
 
+    const scheduledDay = schedule.days.find((day) => day.isoDate === performedOn);
+
+    if (!scheduledDay || scheduledDay.completedCount < 1) {
+      throw new Error("La agenda semanal no refleja el gym registrado en la fecha elegida.");
+    }
+
     console.log("Smoke workout lifecycle ok:", {
       routineName: routine.name,
       sessionId: started.sessionId,
+      performedOn,
       gymTotal: snapshot.summary.gym.total.sessions,
     });
   } finally {

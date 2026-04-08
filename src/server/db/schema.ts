@@ -179,6 +179,7 @@ export const workoutSessions = pgTable("workout_sessions", {
   routineTemplateId: uuid("routine_template_id").references(() => routineTemplates.id, {
     onDelete: "set null",
   }),
+  performedOn: date("performed_on").notNull(),
   startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
   notes: text("notes").default("").notNull(),

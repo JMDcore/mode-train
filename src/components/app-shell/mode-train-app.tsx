@@ -32,10 +32,12 @@ import {
   createScheduleEntryAction,
   deleteScheduleEntryAction,
   logRunningSessionAction,
+  startWorkoutSessionAction,
 } from "@/server/training/actions";
 import type {
   RunLogActionState,
   ScheduleActionState,
+  WorkoutLaunchActionState,
 } from "@/server/training/types";
 import { StartWorkoutButton } from "@/components/training/start-workout-button";
 
@@ -61,6 +63,15 @@ const initialScheduleState: ScheduleActionState = {
 const initialRunState: RunLogActionState = {
   error: null,
   success: null,
+};
+
+const initialWorkoutLaunchState: WorkoutLaunchActionState = {
+  error: null,
+  success: null,
+  nextPath: null,
+  resumed: false,
+  routineId: null,
+  sessionId: null,
 };
 
 function formatMetricCaption(key: AppSnapshot["focusMetrics"][number]["key"]) {
@@ -445,6 +456,7 @@ function AgendaScreen(props: {
       <section className="mt-form-stack">
         <ScheduleGymCard snapshot={props.snapshot} selectedDate={selectedDate} />
         <ScheduleRunCard selectedDate={selectedDate} />
+        <GymLogCard snapshot={props.snapshot} selectedDate={selectedDate} />
         <RunLogCard selectedDate={selectedDate} />
       </section>
     </div>
@@ -731,6 +743,7 @@ function AgendaEntryCard(props: {
         {props.entry.entryType === "gym" && props.entry.routineTemplateId ? (
           <StartWorkoutButton
             routineTemplateId={props.entry.routineTemplateId}
+            sessionDate={props.entry.scheduledDate}
             label="Abrir"
             className="mt-inline-button"
           />
@@ -954,6 +967,69 @@ function RunLogCard(props: {
   );
 }
 
+function GymLogCard(props: {
+  snapshot: AppSnapshot;
+  selectedDate: string;
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState(startWorkoutSessionAction, initialWorkoutLaunchState);
+
+  useEffect(() => {
+    if (!state.nextPath) {
+      return;
+    }
+
+    router.push(state.nextPath);
+    router.refresh();
+  }, [router, state.nextPath]);
+
+  return (
+    <section className="mt-form-card">
+      <div className="mt-form-card__head">
+        <div>
+          <p className="mt-kicker">Registrar</p>
+          <h3>Gym hecho</h3>
+        </div>
+        <span className="mt-chip mt-chip--violet">Manual o en directo</span>
+      </div>
+
+      <form action={formAction} className="mt-form-grid">
+        <label className="mt-field">
+          <span>Fecha</span>
+          <input type="date" name="sessionDate" defaultValue={props.selectedDate} required />
+        </label>
+
+        <label className="mt-field">
+          <span>Rutina</span>
+          <select
+            name="routineTemplateId"
+            defaultValue={props.snapshot.defaultRoutine?.id ?? props.snapshot.routines[0]?.id ?? ""}
+            required
+          >
+            {props.snapshot.routines.length > 0 ? (
+              props.snapshot.routines.map((routine) => (
+                <option key={routine.id} value={routine.id}>
+                  {routine.name}
+                </option>
+              ))
+            ) : (
+              <option value="">No hay rutinas</option>
+            )}
+          </select>
+        </label>
+
+        <GymSubmitButton
+          className="mt-action-button mt-action-button--ghost"
+          disabled={props.snapshot.routines.length === 0}
+        />
+      </form>
+
+      {state.error ? <p className="mt-form-feedback mt-form-feedback--error">{state.error}</p> : null}
+      {state.success ? <p className="mt-form-feedback">{state.success}</p> : null}
+    </section>
+  );
+}
+
 function DeleteScheduleEntryButton(props: {
   entryId: string;
 }) {
@@ -1010,6 +1086,20 @@ function RunSubmitButton(props: {
     <button type="submit" className={props.className} disabled={pending}>
       <Route size={16} strokeWidth={2.3} />
       {pending ? "Guardando..." : "Guardar carrera"}
+    </button>
+  );
+}
+
+function GymSubmitButton(props: {
+  className: string;
+  disabled?: boolean;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" className={props.className} disabled={pending || props.disabled}>
+      <Dumbbell size={16} strokeWidth={2.3} />
+      {pending ? "Abriendo..." : "Registrar gym"}
     </button>
   );
 }

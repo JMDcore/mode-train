@@ -19,6 +19,7 @@ const initialState: WorkoutLaunchActionState = {
 
 export function StartWorkoutButton(props: {
   routineTemplateId: string;
+  sessionDate?: string;
   label?: string;
   className?: string;
   compact?: boolean;
@@ -39,6 +40,7 @@ export function StartWorkoutButton(props: {
   return (
     <form action={formAction} className="inline-action-form">
       <input type="hidden" name="routineTemplateId" value={props.routineTemplateId} />
+      {props.sessionDate ? <input type="hidden" name="sessionDate" value={props.sessionDate} /> : null}
       <StartWorkoutSubmit
         className={props.className}
         compact={props.compact}
