@@ -426,6 +426,7 @@ select {
 
 .action-grid,
 .stat-grid,
+.social-stat-grid,
 .two-column-grid,
 .gallery-grid {
   display: grid;
@@ -433,7 +434,8 @@ select {
 }
 
 .action-grid,
-.stat-grid {
+.stat-grid,
+.social-stat-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -744,6 +746,17 @@ select {
   cursor: pointer;
 }
 
+.logout-button--link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-card {
+  display: grid;
+  gap: 0.32rem;
+}
+
 .gallery-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -925,6 +938,12 @@ select {
   margin-top: 1.2rem;
 }
 
+.auth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.95rem;
+}
+
 .auth-field {
   display: grid;
   gap: 0.45rem;
@@ -957,7 +976,8 @@ select {
   color: var(--text-faint);
 }
 
-.auth-field__control input {
+.auth-field__control input,
+.auth-field__control select {
   width: 100%;
   border: 0;
   outline: 0;
@@ -965,7 +985,13 @@ select {
   color: var(--text);
 }
 
-.auth-field__control input::placeholder {
+.auth-field__control select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.auth-field__control input::placeholder,
+.auth-field__control select:invalid {
   color: var(--text-faint);
 }
 
@@ -1010,6 +1036,125 @@ select {
   font-weight: 700;
 }
 
+.starter-week {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.starter-week__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 1.2rem;
+  background:
+    linear-gradient(180deg, rgba(213, 191, 255, 0.98), rgba(141, 75, 255, 0.96));
+  color: #14081f;
+  box-shadow: 0 20px 45px rgba(103, 46, 194, 0.42);
+  padding: 0.82rem 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.starter-week__button:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.starter-week__button--compact {
+  height: 2.85rem;
+  min-width: 2.85rem;
+  padding-inline: 0.95rem;
+}
+
+.starter-week__error,
+.starter-week__success {
+  margin: 0;
+  border-radius: 1rem;
+  padding: 0.78rem 0.9rem;
+  font-size: 0.82rem;
+}
+
+.starter-week__error {
+  border: 1px solid rgba(255, 136, 171, 0.16);
+  background: rgba(255, 106, 150, 0.08);
+  color: rgba(255, 205, 220, 0.94);
+}
+
+.starter-week__success {
+  border: 1px solid rgba(166, 255, 215, 0.14);
+  background: rgba(76, 201, 152, 0.08);
+  color: rgba(201, 255, 231, 0.94);
+}
+
+.quick-routine-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.quick-routine-form__row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: 1.35rem;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.016)),
+    rgba(13, 11, 22, 0.82);
+  padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+}
+
+.quick-routine-form__row input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.quick-routine-form__row input::placeholder {
+  color: var(--text-faint);
+}
+
+.quick-routine-form__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.8rem;
+  width: 2.8rem;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(213, 191, 255, 0.98), rgba(141, 75, 255, 0.96));
+  color: #14081f;
+  box-shadow: 0 14px 28px rgba(103, 46, 194, 0.28);
+  cursor: pointer;
+}
+
+.quick-routine-form__error,
+.quick-routine-form__success {
+  margin: 0;
+  border-radius: 1rem;
+  padding: 0.78rem 0.9rem;
+  font-size: 0.82rem;
+}
+
+.quick-routine-form__error {
+  border: 1px solid rgba(255, 136, 171, 0.16);
+  background: rgba(255, 106, 150, 0.08);
+  color: rgba(255, 205, 220, 0.94);
+}
+
+.quick-routine-form__success {
+  border: 1px solid rgba(166, 255, 215, 0.14);
+  background: rgba(76, 201, 152, 0.08);
+  color: rgba(201, 255, 231, 0.94);
+}
+
 @keyframes orb-drift {
   0%,
   100% {
@@ -1051,7 +1196,9 @@ select {
   }
 
   .action-grid,
-  .stat-grid {
+  .stat-grid,
+  .social-stat-grid,
+  .auth-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

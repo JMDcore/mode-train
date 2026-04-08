@@ -47,6 +47,27 @@ const exerciseSeed = [
     tags: ["push", "shoulders"],
   },
   {
+    name: "Lat Pulldown",
+    categorySlug: "upper-body",
+    primaryMuscleGroup: "Back",
+    equipment: "Machine",
+    tags: ["pull", "lats"],
+  },
+  {
+    name: "Seated Cable Row",
+    categorySlug: "upper-body",
+    primaryMuscleGroup: "Back",
+    equipment: "Cable",
+    tags: ["pull", "mid-back"],
+  },
+  {
+    name: "Lateral Raise",
+    categorySlug: "upper-body",
+    primaryMuscleGroup: "Shoulders",
+    equipment: "Dumbbells",
+    tags: ["delts", "isolation"],
+  },
+  {
     name: "Back Squat",
     categorySlug: "lower-body",
     primaryMuscleGroup: "Legs",
@@ -68,6 +89,41 @@ const exerciseSeed = [
     tags: ["legs", "unilateral"],
   },
   {
+    name: "Leg Press",
+    categorySlug: "lower-body",
+    primaryMuscleGroup: "Legs",
+    equipment: "Machine",
+    tags: ["legs", "machine"],
+  },
+  {
+    name: "Hip Thrust",
+    categorySlug: "lower-body",
+    primaryMuscleGroup: "Glutes",
+    equipment: "Barbell",
+    tags: ["glutes", "posterior-chain"],
+  },
+  {
+    name: "Bulgarian Split Squat",
+    categorySlug: "lower-body",
+    primaryMuscleGroup: "Legs",
+    equipment: "Dumbbells",
+    tags: ["legs", "unilateral"],
+  },
+  {
+    name: "Leg Curl",
+    categorySlug: "lower-body",
+    primaryMuscleGroup: "Hamstrings",
+    equipment: "Machine",
+    tags: ["hamstrings", "isolation"],
+  },
+  {
+    name: "Plank",
+    categorySlug: "lower-body",
+    primaryMuscleGroup: "Core",
+    equipment: "Bodyweight",
+    tags: ["core", "stability"],
+  },
+  {
     name: "Easy Run",
     categorySlug: "running",
     primaryMuscleGroup: "Cardio",
@@ -80,6 +136,13 @@ const exerciseSeed = [
     primaryMuscleGroup: "Cardio",
     equipment: "Shoes",
     tags: ["tempo", "running"],
+  },
+  {
+    name: "Long Run",
+    categorySlug: "running",
+    primaryMuscleGroup: "Cardio",
+    equipment: "Shoes",
+    tags: ["long", "running"],
   },
 ];
 

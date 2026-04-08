@@ -9,24 +9,27 @@ import {
   ChevronRight,
   Clock3,
   Dumbbell,
-  Flame,
   Footprints,
-  HeartPulse,
   House,
-  MoonStar,
   Play,
   Plus,
+  Route,
   Trophy,
-  TrendingUp,
+  Target,
   User,
   Users,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import Link from "next/link";
 import { useState } from "react";
 
+import { QuickRoutineForm } from "@/components/training/quick-routine-form";
+import { StarterWeekButton } from "@/components/training/starter-week-button";
 import { cn } from "@/lib/utils";
 import type { AuthUser } from "@/server/auth/user";
+import type { UserProfile } from "@/server/profile";
+import type { AppSnapshot } from "@/server/app/snapshot";
 
 const transition = {
   duration: 0.44,
@@ -41,6 +44,7 @@ const tabs = [
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
+type QuickAction = { label: string; icon: LucideIcon; targetTab: TabKey };
 
 const headerCopy: Record<TabKey, { eyebrow: string; title: string }> = {
   home: { eyebrow: "Wednesday", title: "Tonight" },
@@ -50,68 +54,23 @@ const headerCopy: Record<TabKey, { eyebrow: string; title: string }> = {
 };
 
 const quickActions = [
-  { label: "Plan", icon: CalendarDays },
-  { label: "Log", icon: Play },
-  { label: "Run", icon: Footprints },
-  { label: "Add", icon: Plus },
-] satisfies { label: string; icon: LucideIcon }[];
+  { label: "Plan", icon: CalendarDays, targetTab: "train" },
+  { label: "Log", icon: Play, targetTab: "train" },
+  { label: "Circle", icon: Users, targetTab: "social" },
+  { label: "Me", icon: User, targetTab: "profile" },
+] satisfies QuickAction[];
 
-const dailyStats = [
-  { label: "Streak", value: "19", icon: Flame },
-  { label: "Sleep", value: "7.4", icon: MoonStar },
-  { label: "Load", value: "82%", icon: HeartPulse },
-] satisfies { label: string; value: string; icon: LucideIcon }[];
+const statIconMap: Record<string, LucideIcon> = {
+  goal: Target,
+  routines: Dumbbell,
+  library: Route,
+};
 
-const dayFlow = [
-  { title: "Upper focus", meta: "18:30 · 52 min", icon: Dumbbell },
-  { title: "Easy run", meta: "Tomorrow · 5.2 km", icon: Footprints },
-];
-
-const socialPulse = [
-  { name: "Nora", event: "Tempo run", meta: "6.4 km", tint: "cyan" },
-  { name: "Ares", event: "Incline PR", meta: "4 x 6", tint: "violet" },
-  { name: "Leo", event: "Recovery", meta: "Mobility", tint: "pink" },
-] as const;
-
-const workoutRows = [
-  {
-    name: "Trap bar deadlift",
-    meta: "5 sets",
-    chips: ["75 kg", "4 reps"],
-    icon: Dumbbell,
-  },
-  {
-    name: "Chest-supported row",
-    meta: "4 sets",
-    chips: ["32 kg", "8 reps"],
-    icon: Activity,
-  },
-  {
-    name: "Lat pulldown",
-    meta: "3 sets",
-    chips: ["55 kg", "12 reps"],
-    icon: Zap,
-  },
-] satisfies {
-  name: string;
-  meta: string;
-  chips: string[];
-  icon: LucideIcon;
-}[];
-
-const circleFeed = [
-  { name: "Nora", title: "Tempo block", value: "+14", tint: "cyan" },
-  { name: "Ares", title: "Press PR", value: "92%", tint: "violet" },
-  { name: "Leo", title: "Recovery note", value: "Soft", tint: "pink" },
-] as const;
-
-const profileStats = [
-  { label: "Weight", value: "77.4" },
-  { label: "5k", value: "24:58" },
-  { label: "Squat", value: "92.5" },
-];
-
-export function ModeTrainApp(props: { user: AuthUser }) {
+export function ModeTrainApp(props: {
+  user: AuthUser;
+  profile: UserProfile;
+  snapshot: AppSnapshot;
+}) {
   const [activeTab, setActiveTab] = useState<TabKey>("home");
   const header = headerCopy[activeTab];
 
@@ -151,10 +110,17 @@ export function ModeTrainApp(props: { user: AuthUser }) {
               transition={transition}
               className="screen-stack"
             >
-              {activeTab === "home" ? <HomeScreen /> : null}
-              {activeTab === "train" ? <TrainScreen /> : null}
-              {activeTab === "social" ? <SocialScreen /> : null}
-              {activeTab === "profile" ? <ProfileScreen user={props.user} /> : null}
+              {activeTab === "home" ? (
+                <HomeScreen
+                  snapshot={props.snapshot}
+                  onNavigate={(tab) => setActiveTab(tab)}
+                />
+              ) : null}
+              {activeTab === "train" ? <TrainScreen snapshot={props.snapshot} /> : null}
+              {activeTab === "social" ? <SocialScreen snapshot={props.snapshot} /> : null}
+              {activeTab === "profile" ? (
+                <ProfileScreen user={props.user} profile={props.profile} snapshot={props.snapshot} />
+              ) : null}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -197,43 +163,59 @@ export function ModeTrainApp(props: { user: AuthUser }) {
   );
 }
 
-function HomeScreen() {
+function HomeScreen(props: {
+  snapshot: AppSnapshot;
+  onNavigate: (tab: TabKey) => void;
+}) {
   return (
     <>
       <SurfaceCard tone="accent" className="hero-card">
         <div className="hero-card__copy">
           <div className="hero-chip">
             <Dumbbell size={14} strokeWidth={2.2} />
-            Pull day
+            {props.snapshot.heroChip}
           </div>
-          <h2 className="hero-card__title">52 min. Clean, focused, ready.</h2>
+          <h2 className="hero-card__title">{props.snapshot.heroTitle}</h2>
           <div className="hero-meta">
-            <MetaPill icon={Clock3} label="18:30" />
-            <MetaPill icon={Zap} label="6 blocks" />
-            <MetaPill icon={TrendingUp} label="82%" />
+            <MetaPill icon={Clock3} label={props.snapshot.heroMeta[0] ?? "0x week"} />
+            <MetaPill icon={Zap} label={props.snapshot.heroMeta[1] ?? "0 routines"} />
+            <MetaPill icon={Target} label={props.snapshot.heroMeta[2] ?? "0 exercises"} />
           </div>
         </div>
 
         <div className="hero-card__aside">
-          <ProgressRing value={82} label="Ready" />
-          <button type="button" className="primary-button">
-            <Play size={16} strokeWidth={2.4} />
-            Start
-          </button>
+          <ProgressRing value={props.snapshot.readiness} label="Ready" />
+          {props.snapshot.canGenerateStarterWeek ? (
+            <StarterWeekButton className="primary-button" />
+          ) : (
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => props.onNavigate("train")}
+            >
+              <Play size={16} strokeWidth={2.4} />
+              Start
+            </button>
+          )}
         </div>
       </SurfaceCard>
 
       <div className="action-grid">
         {quickActions.map((action) => (
-          <ActionTile key={action.label} icon={action.icon} label={action.label} />
+          <ActionTile
+            key={action.label}
+            icon={action.icon}
+            label={action.label}
+            onClick={() => props.onNavigate(action.targetTab)}
+          />
         ))}
       </div>
 
       <div className="stat-grid">
-        {dailyStats.map((stat) => (
+        {props.snapshot.quickStats.map((stat) => (
           <MetricTile
-            key={stat.label}
-            icon={stat.icon}
+            key={stat.key}
+            icon={statIconMap[stat.key]}
             label={stat.label}
             value={stat.value}
           />
@@ -242,10 +224,16 @@ function HomeScreen() {
 
       <ScreenSection icon={CalendarDays} title="Today">
         <div className="list-stack">
-          {dayFlow.map((item) => (
+          {props.snapshot.todayItems.map((item) => (
             <RowCard
               key={item.title}
-              icon={item.icon}
+              icon={
+                item.kind === "run"
+                  ? Footprints
+                  : item.kind === "library"
+                    ? Route
+                    : Dumbbell
+              }
               title={item.title}
               meta={item.meta}
             />
@@ -255,12 +243,12 @@ function HomeScreen() {
 
       <ScreenSection icon={Users} title="Circle">
         <div className="avatar-row">
-          {socialPulse.map((person) => (
+          {props.snapshot.socialPreview.map((person) => (
             <AvatarCard
               key={person.name}
               name={person.name}
-              caption={person.event}
-              value={person.meta}
+              caption={person.caption}
+              value={person.value}
               tint={person.tint}
             />
           ))}
@@ -270,48 +258,87 @@ function HomeScreen() {
   );
 }
 
-function TrainScreen() {
+function TrainScreen(props: { snapshot: AppSnapshot }) {
   return (
     <>
       <SurfaceCard tone="accent">
         <div className="compact-hero">
           <div>
-            <p className="card-kicker">Tonight</p>
-            <h2 className="compact-hero__title">Pull / posterior</h2>
+            <p className="card-kicker">Plan</p>
+            <h2 className="compact-hero__title">
+              {props.snapshot.weeklyPlan[0]?.title ?? "Build your first week"}
+            </h2>
           </div>
-          <button type="button" className="primary-icon-button" aria-label="Start session">
-            <Play size={16} strokeWidth={2.4} />
-          </button>
+          {props.snapshot.canGenerateStarterWeek ? (
+            <StarterWeekButton compact />
+          ) : (
+            <button type="button" className="primary-icon-button" aria-label="Start session">
+              <Play size={16} strokeWidth={2.4} />
+            </button>
+          )}
         </div>
       </SurfaceCard>
 
-      <ScreenSection icon={Dumbbell} title="Blocks">
+      <ScreenSection icon={CalendarDays} title="Week">
         <div className="list-stack">
-          {workoutRows.map((row) => (
-            <WorkoutCard key={row.name} {...row} />
-          ))}
+          {props.snapshot.weeklyPlan.length > 0 ? (
+            props.snapshot.weeklyPlan.map((entry) => (
+              <RowCard
+                key={entry.id}
+                icon={entry.kind === "run" ? Footprints : CalendarDays}
+                title={entry.dayLabel}
+                meta={`${entry.title} · ${entry.meta}`}
+              />
+            ))
+          ) : (
+            <EmptyCard
+              title="Starter week ready to build"
+              body="Un toque y te montamos una semana inicial con rutinas y planning real segun tu perfil."
+            />
+          )}
         </div>
       </ScreenSection>
 
-      <div className="two-column-grid">
-        <SurfaceCard>
-          <p className="card-kicker">Run</p>
-          <div className="mini-feature">
-            <Footprints size={18} strokeWidth={2.2} />
-            <span>12 min easy</span>
-          </div>
-        </SurfaceCard>
+      <ScreenSection icon={Dumbbell} title="Routines">
+        <QuickRoutineForm />
+        <div className="list-stack">
+          {props.snapshot.routines.length > 0 ? (
+            props.snapshot.routines.map((routine) => (
+              <WorkoutCard
+                key={routine.id}
+                icon={Dumbbell}
+                name={routine.name}
+                meta={`${routine.itemCount} exercises`}
+                chips={["Routine", "Ready"]}
+              />
+            ))
+          ) : (
+            <EmptyCard
+              title="No routines yet"
+              body="Crea una rutina rapida y luego iremos anadiendo bloques y ejercicios."
+            />
+          )}
+        </div>
+      </ScreenSection>
 
-        <SurfaceCard className="add-card">
-          <Plus size={18} strokeWidth={2.3} />
-          <span>Add block</span>
-        </SurfaceCard>
-      </div>
+      <ScreenSection icon={Route} title="Library">
+        <div className="list-stack">
+          {props.snapshot.library.map((exercise) => (
+            <WorkoutCard
+              key={exercise.id}
+              icon={exercise.primaryMuscleGroup === "Cardio" ? Footprints : Activity}
+              name={exercise.name}
+              meta={exercise.primaryMuscleGroup}
+              chips={[exercise.equipment]}
+            />
+          ))}
+        </div>
+      </ScreenSection>
     </>
   );
 }
 
-function SocialScreen() {
+function SocialScreen(props: { snapshot: AppSnapshot }) {
   return (
     <>
       <SurfaceCard tone="accent">
@@ -322,22 +349,35 @@ function SocialScreen() {
           </div>
           <div className="pill-soft">
             <Users size={14} strokeWidth={2.2} />
-            12
+            {props.snapshot.socialCounts.friends}
           </div>
         </div>
       </SurfaceCard>
 
-      <ScreenSection icon={Activity} title="Feed">
+      <div className="social-stat-grid">
+        <MetricTile icon={Users} label="Friends" value={`${props.snapshot.socialCounts.friends}`} />
+        <MetricTile icon={Bell} label="Alerts" value={`${props.snapshot.socialCounts.notifications}`} />
+        <MetricTile icon={Plus} label="Pending" value={`${props.snapshot.socialCounts.pending}`} />
+      </div>
+
+      <ScreenSection icon={Activity} title="Status">
         <div className="list-stack">
-          {circleFeed.map((item) => (
-            <FeedCard
-              key={item.name}
-              name={item.name}
-              title={item.title}
-              value={item.value}
-              tint={item.tint}
+          {props.snapshot.socialCounts.friends > 0 ? (
+            props.snapshot.socialPreview.map((item) => (
+              <FeedCard
+                key={item.name}
+                name={item.name}
+                title={item.caption}
+                value={item.value}
+                tint={item.tint}
+              />
+            ))
+          ) : (
+            <EmptyCard
+              title="Your circle is still empty"
+              body="La capa social ya esta lista para cuando empieces a invitar amistades privadas."
             />
-          ))}
+          )}
         </div>
       </ScreenSection>
 
@@ -357,7 +397,11 @@ function SocialScreen() {
   );
 }
 
-function ProfileScreen(props: { user: AuthUser }) {
+function ProfileScreen(props: {
+  user: AuthUser;
+  profile: UserProfile;
+  snapshot: AppSnapshot;
+}) {
   return (
     <>
       <SurfaceCard tone="accent">
@@ -372,7 +416,7 @@ function ProfileScreen(props: { user: AuthUser }) {
       </SurfaceCard>
 
       <div className="stat-grid">
-        {profileStats.map((item) => (
+        {props.snapshot.profileMetrics.map((item) => (
           <SurfaceCard key={item.label}>
             <p className="tile-label">{item.label}</p>
             <p className="tile-value">{item.value}</p>
@@ -380,11 +424,14 @@ function ProfileScreen(props: { user: AuthUser }) {
         ))}
       </div>
 
-      <ScreenSection icon={Trophy} title="Records">
+      <ScreenSection icon={Trophy} title="Profile">
         <div className="list-stack">
-          <CompactRow label="Back squat" value="92.5 kg" />
-          <CompactRow label="5 km" value="24:58" />
-          <CompactRow label="Pull-ups" value="14 reps" />
+          <CompactRow label="Goal" value={props.profile.goal} />
+          <CompactRow label="Experience" value={props.profile.experienceLevel} />
+          <CompactRow
+            label="Weekly target"
+            value={`${props.profile.preferredWeeklySessions ?? 0} sessions`}
+          />
         </div>
       </ScreenSection>
 
@@ -395,6 +442,10 @@ function ProfileScreen(props: { user: AuthUser }) {
           <ProgressFrame label="Week 9" tone="late" />
         </div>
       </ScreenSection>
+
+      <Link href="/onboarding" className="logout-button logout-button--link">
+        Editar perfil
+      </Link>
 
       <form action="/logout" method="post">
         <button type="submit" className="logout-button">
@@ -447,11 +498,15 @@ function ScreenSection(props: {
   );
 }
 
-function ActionTile(props: { icon: LucideIcon; label: string }) {
+function ActionTile(props: {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+}) {
   const Icon = props.icon;
 
   return (
-    <button type="button" className="action-tile">
+    <button type="button" className="action-tile" onClick={props.onClick}>
       <span className="action-tile__icon">
         <Icon size={18} strokeWidth={2.2} />
       </span>
@@ -460,7 +515,11 @@ function ActionTile(props: { icon: LucideIcon; label: string }) {
   );
 }
 
-function MetricTile(props: { icon: LucideIcon; label: string; value: string }) {
+function MetricTile(props: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
   const Icon = props.icon;
 
   return (
@@ -563,6 +622,15 @@ function CompactRow(props: { label: string; value: string }) {
     <SurfaceCard className="compact-row">
       <span className="tile-label">{props.label}</span>
       <span className="row-card__title">{props.value}</span>
+    </SurfaceCard>
+  );
+}
+
+function EmptyCard(props: { title: string; body: string }) {
+  return (
+    <SurfaceCard className="empty-card">
+      <p className="row-card__title">{props.title}</p>
+      <p className="row-card__meta">{props.body}</p>
     </SurfaceCard>
   );
 }
