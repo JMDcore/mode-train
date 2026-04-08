@@ -2,10 +2,21 @@ import { NextResponse } from "next/server";
 
 import { destroySession } from "@/server/auth/session";
 
-export async function POST(request: Request) {
+async function handleLogout(request: Request) {
   await destroySession();
 
-  return NextResponse.redirect(new URL("/login", request.url), {
+  return new NextResponse(null, {
     status: 303,
+    headers: {
+      Location: "/login",
+    },
   });
+}
+
+export async function GET(request: Request) {
+  return handleLogout(request);
+}
+
+export async function POST(request: Request) {
+  return handleLogout(request);
 }
