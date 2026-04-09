@@ -7050,3 +7050,251 @@ textarea:focus-visible {
     justify-content: space-between;
   }
 }
+
+/* Home + Agenda simplification pass */
+
+.mt-home-secondary {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mt-home-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.mt-home-mini-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.72rem;
+  padding: 0.95rem;
+  border-radius: 1.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background:
+    radial-gradient(circle at 18% 16%, rgba(143, 98, 255, 0.09), transparent 24%),
+    linear-gradient(180deg, rgba(16, 17, 25, 0.98), rgba(9, 10, 16, 0.98));
+  color: inherit;
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.mt-home-mini-card__icon {
+  display: inline-flex;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mt-home-mini-card__icon--violet {
+  color: rgba(229, 215, 255, 0.94);
+  background: rgba(143, 98, 255, 0.16);
+}
+
+.mt-home-mini-card__icon--lime {
+  color: #e2ffab;
+  background: rgba(183, 245, 66, 0.14);
+}
+
+.mt-home-mini-card > div {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.mt-home-mini-card p,
+.mt-home-mini-card span {
+  margin: 0;
+}
+
+.mt-home-mini-card p {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mt-home-mini-card strong {
+  font-size: 1rem;
+  letter-spacing: -0.04em;
+  color: white;
+}
+
+.mt-home-mini-card span {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.mt-home-routine-rail {
+  display: grid;
+  gap: 0.78rem;
+}
+
+.mt-home-routine-rail__list {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.mt-routine-mini-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background:
+    radial-gradient(circle at 16% 16%, rgba(143, 98, 255, 0.08), transparent 22%),
+    rgba(255, 255, 255, 0.025);
+}
+
+.mt-routine-mini-card--active {
+  border-color: rgba(183, 245, 66, 0.16);
+  background:
+    radial-gradient(circle at 84% 18%, rgba(183, 245, 66, 0.1), transparent 18%),
+    radial-gradient(circle at 16% 16%, rgba(143, 98, 255, 0.08), transparent 22%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.mt-routine-mini-card__copy {
+  display: grid;
+  gap: 0.16rem;
+  min-width: 0;
+}
+
+.mt-routine-mini-card__copy span,
+.mt-routine-mini-card__copy p {
+  margin: 0;
+}
+
+.mt-routine-mini-card__copy span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.mt-routine-mini-card__copy strong {
+  font-size: 1.02rem;
+  letter-spacing: -0.04em;
+}
+
+.mt-routine-mini-card__copy p {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.mt-mini-pill {
+  display: inline-flex;
+  min-height: 2.55rem;
+  padding: 0 0.92rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(183, 245, 66, 0.16);
+  background: rgba(183, 245, 66, 0.12);
+  color: #e4ffac;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.mt-mini-pill--ghost {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(238, 231, 255, 0.94);
+}
+
+.mt-agenda-overview {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.mt-agenda-overview__stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.mt-agenda-dayhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.mt-agenda-dayhead h3 {
+  margin: 0.12rem 0 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.mt-agenda-composer {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mt-agenda-composer__head {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.mt-agenda-composer__head h3 {
+  margin: 0.12rem 0 0;
+  font-size: 1.35rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.mt-agenda-composer__head p:last-child {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.mt-schedule-entry {
+  align-items: stretch;
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(circle at 16% 16%, rgba(143, 98, 255, 0.07), transparent 22%),
+    rgba(255, 255, 255, 0.025);
+}
+
+.mt-schedule-entry__main {
+  align-items: flex-start;
+}
+
+.mt-schedule-entry__main > div strong {
+  display: block;
+}
+
+.mt-schedule-entry__main > div span {
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+@media (max-width: 420px) {
+  .mt-home-mini-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mt-routine-mini-card,
+  .mt-agenda-dayhead {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mt-agenda-overview__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

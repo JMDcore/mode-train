@@ -221,6 +221,7 @@ function HomeScreen(props: {
   const gymTodayCount = props.snapshot.schedule.todayEntries.filter((entry) => entry.entryType === "gym").length;
   const runTodayCount = props.snapshot.schedule.todayEntries.filter((entry) => entry.entryType === "running").length;
   const weekPlanned = props.snapshot.schedule.days.reduce((acc, day) => acc + day.plannedCount, 0);
+  const weekLogged = props.snapshot.schedule.days.reduce((acc, day) => acc + day.completedCount, 0);
 
   return (
     <div className="mt-screen mt-screen--home">
@@ -371,41 +372,64 @@ function HomeScreen(props: {
         )}
       </section>
 
-      <section className="mt-program-board">
-        <div className="mt-program-board__head">
-          <div>
-            <span>Biblioteca activa</span>
-            <strong>{routineCards.length > 0 ? "Tus siguientes bloques" : "Todavia no hay plantillas"}</strong>
-          </div>
-          <Link href="/app/routines">Ver todas</Link>
+      <section className="mt-home-secondary">
+        <div className="mt-home-mini-grid">
+          <button type="button" className="mt-home-mini-card" onClick={() => props.onNavigate("agenda")}>
+            <span className="mt-home-mini-card__icon mt-home-mini-card__icon--violet">
+              <CalendarDays size={16} strokeWidth={2.2} />
+            </span>
+            <div>
+              <p>Semana</p>
+              <strong>{weekPlanned} bloques</strong>
+              <span>{gymTodayCount + runTodayCount} para hoy</span>
+            </div>
+          </button>
+
+          <button type="button" className="mt-home-mini-card" onClick={() => props.onNavigate("summary")}>
+            <span className="mt-home-mini-card__icon mt-home-mini-card__icon--lime">
+              <Activity size={16} strokeWidth={2.2} />
+            </span>
+            <div>
+              <p>Resumen</p>
+              <strong>{weekLogged} registros</strong>
+              <span>{props.snapshot.summary.gym.month.sessions} gym este mes</span>
+            </div>
+          </button>
         </div>
 
-        {routineCards.length > 0 ? (
-          <div className="mt-program-board__stack">
-            {routineCards.map((routine, index) => (
-              <RoutineShowcaseCard
-                key={routine.id}
-                routine={routine}
-                highlight={index === 0}
-                compact={index > 0}
-                isActive={props.snapshot.activeWorkoutSummary?.routineId === routine.id}
-                levelLabel={props.snapshot.levelLabel}
-                goalLabel={props.snapshot.goalLabel}
-                activeSessionId={
-                  props.snapshot.activeWorkoutSummary?.routineId === routine.id
-                    ? props.snapshot.activeWorkoutSummary.sessionId
-                    : null
-                }
-              />
-            ))}
+        <div className="mt-home-routine-rail">
+          <div className="mt-program-board__head">
+            <div>
+              <span>Rutinas activas</span>
+              <strong>{routineCards.length > 0 ? "Tus bloques guardados" : "Todavia no hay plantillas"}</strong>
+            </div>
+            <Link href="/app/routines">Ver todas</Link>
           </div>
-        ) : (
-          <div className="mt-empty-panel">
-            <strong>Sin rutinas todavia</strong>
-            <span>Crea una plantilla y la dejaremos lista para agenda y registro.</span>
-          </div>
-        )}
+
+          {routineCards.length > 0 ? (
+            <div className="mt-home-routine-rail__list">
+              {routineCards.map((routine) => (
+                <RoutineMiniCard
+                  key={routine.id}
+                  routine={routine}
+                  isActive={props.snapshot.activeWorkoutSummary?.routineId === routine.id}
+                  activeSessionId={
+                    props.snapshot.activeWorkoutSummary?.routineId === routine.id
+                      ? props.snapshot.activeWorkoutSummary.sessionId
+                      : null
+                  }
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-empty-panel">
+              <strong>Sin rutinas todavia</strong>
+              <span>Crea una plantilla y la dejaremos lista para agenda y registro.</span>
+            </div>
+          )}
+        </div>
       </section>
+
     </div>
   );
 }
@@ -485,74 +509,32 @@ function HomeFeatureCard(props: {
   );
 }
 
-function RoutineShowcaseCard(props: {
+function RoutineMiniCard(props: {
   routine: AppSnapshot["routines"][number];
-  highlight: boolean;
-  compact: boolean;
   isActive: boolean;
-  levelLabel: string;
-  goalLabel: string;
   activeSessionId: string | null;
 }) {
-  const description =
-    props.routine.itemCount > 0
-      ? `${props.routine.itemCount} ejercicios listos para ${props.goalLabel.toLowerCase()}.`
-      : "Plantilla vacia, preparada para completarla con tu pool de ejercicios.";
-
   return (
-    <article
-      className={cn(
-        "mt-program-card",
-        props.highlight && "mt-program-card--highlight",
-        props.compact && "mt-program-card--compact",
+    <article className={cn("mt-routine-mini-card", props.isActive && "mt-routine-mini-card--active")}>
+      <div className="mt-routine-mini-card__copy">
+        <span>{props.isActive ? "Sesion abierta" : "Plantilla"}</span>
+        <strong>{props.routine.name}</strong>
+        <p>
+          {props.routine.itemCount > 0
+            ? `${props.routine.itemCount} ejercicios listos`
+            : "Completa la rutina con ejercicios de tu pool"}
+        </p>
+      </div>
+
+      {props.isActive && props.activeSessionId ? (
+        <Link href={`/app/workouts/${props.activeSessionId}`} className="mt-mini-pill">
+          Continuar
+        </Link>
+      ) : (
+        <Link href={`/app/routines/${props.routine.id}`} className="mt-mini-pill mt-mini-pill--ghost">
+          Abrir
+        </Link>
       )}
-    >
-      <div className="mt-program-card__art">
-        <Image
-          src="/media/anatomy-mannequin.svg"
-          alt="Programa"
-          fill
-          sizes="(max-width: 768px) 100vw, 40vw"
-          className="mt-program-card__image"
-        />
-      </div>
-      <div className="mt-program-card__veil" />
-
-      <div className="mt-program-card__inner">
-        <div className="mt-program-card__top">
-          <span className={cn("mt-chip", props.highlight ? "mt-chip--violet" : "mt-chip--ghost")}>
-            {props.levelLabel}
-          </span>
-          <span className="mt-chip mt-chip--lime">
-            {props.routine.itemCount > 0 ? `${props.routine.itemCount} ejercicios` : "Vacia"}
-          </span>
-        </div>
-
-        <div className="mt-program-card__copy">
-          <p className="mt-kicker">Bloque curado</p>
-          <h3>{props.routine.name}</h3>
-          <p>{props.compact ? props.goalLabel : description}</p>
-        </div>
-
-        <div className="mt-program-card__footer">
-          {props.isActive && props.activeSessionId ? (
-            <Link href={`/app/workouts/${props.activeSessionId}`} className="mt-primary-pill mt-primary-pill--compact">
-              <span className="mt-primary-pill__play" />
-              Continuar
-            </Link>
-          ) : (
-            <Link href={`/app/routines/${props.routine.id}`} className="mt-primary-pill mt-primary-pill--compact">
-              <span className="mt-primary-pill__play" />
-              Abrir
-            </Link>
-          )}
-
-          <div className="mt-program-card__badge">
-            <strong>{props.routine.itemCount}</strong>
-            <span>items</span>
-          </div>
-        </div>
-      </div>
     </article>
   );
 }
@@ -571,6 +553,26 @@ function AgendaScreen(props: {
   const selectedDay =
     props.snapshot.schedule.days.find((day) => day.isoDate === selectedDate) ??
     props.snapshot.schedule.days[0];
+  const weekPlanned = props.snapshot.schedule.days.reduce((acc, day) => acc + day.plannedCount, 0);
+  const weekLogged = props.snapshot.schedule.days.reduce((acc, day) => acc + day.completedCount, 0);
+  const composerMeta = {
+    "plan-gym": {
+      title: "Planifica gym",
+      description: "Deja fijada la rutina del dia y la app la propondrá cuando toque entrenar.",
+    },
+    "plan-running": {
+      title: "Planifica running",
+      description: "Agenda una salida suave, tempo o libre aunque no sepas aun la distancia.",
+    },
+    "log-gym": {
+      title: "Registrar gym",
+      description: "Lanza un entreno hoy o a posteriori y deja los sets guardados con fecha real.",
+    },
+    "log-running": {
+      title: "Registrar running",
+      description: "Guarda una carrera hecha y súmala al historial y al resumen al instante.",
+    },
+  }[composerMode];
 
   return (
     <div className="mt-screen">
@@ -594,6 +596,14 @@ function AgendaScreen(props: {
             </p>
           </div>
           <div className="mt-agenda-overview__stats">
+            <div className="mt-agenda-overview__stat">
+              <span>Semana</span>
+              <strong>{weekPlanned}</strong>
+            </div>
+            <div className="mt-agenda-overview__stat">
+              <span>Registrados</span>
+              <strong>{weekLogged}</strong>
+            </div>
             <div className="mt-agenda-overview__stat">
               <span>Gym</span>
               <strong>
@@ -624,6 +634,16 @@ function AgendaScreen(props: {
         </div>
 
         <div className="mt-planner-card__body">
+          <div className="mt-agenda-dayhead">
+            <div>
+              <p className="mt-kicker">Bloques del dia</p>
+              <h3>{selectedDay?.dayLabel ?? "Semana"}</h3>
+            </div>
+            <span className="mt-chip mt-chip--ghost">
+              {selectedDay?.entries.length ?? 0} eventos
+            </span>
+          </div>
+
           {selectedDay && selectedDay.entries.length > 0 ? (
             <div className="mt-planner-list">
               {selectedDay.entries.map((entry) => (
@@ -640,6 +660,14 @@ function AgendaScreen(props: {
       </section>
 
       <section className="mt-agenda-composer">
+        <div className="mt-agenda-composer__head">
+          <div>
+            <p className="mt-kicker">Composer</p>
+            <h3>{composerMeta.title}</h3>
+          </div>
+          <p>{composerMeta.description}</p>
+        </div>
+
         <div className="mt-agenda-composer__tabs">
           {[
             { key: "plan-gym", label: "Gym", icon: Dumbbell },
