@@ -39,6 +39,9 @@ export type RoutineEditorData = {
     id: string;
     name: string;
     notes: string;
+    focusOverride: TrainingFocusKey | null;
+    focusKey: TrainingFocusKey;
+    focusLabel: string;
     createdAt: Date;
     updatedAt: Date;
   };
@@ -56,6 +59,7 @@ export type RoutinesHubData = {
     latestScheduledDate: string | null;
     focusKey: TrainingFocusKey;
     focusLabel: string;
+    focusOverride: TrainingFocusKey | null;
   }>;
   librarySummary: {
     systemCount: number;
@@ -70,6 +74,7 @@ async function getOwnedRoutineRecord(db: ReturnType<typeof getDb>, userId: strin
       id: routineTemplates.id,
       name: routineTemplates.name,
       notes: routineTemplates.notes,
+      focusOverride: routineTemplates.focusOverride,
       createdAt: routineTemplates.createdAt,
       updatedAt: routineTemplates.updatedAt,
     })
@@ -130,8 +135,14 @@ export async function getRoutineEditorData(
     .where(or(eq(exercises.isSystem, true), eq(exercises.ownerUserId, userId)))
     .orderBy(asc(exercises.name));
 
+  const routineFocusMap = await getRoutineFocusMap(db, [routine]);
+
   return {
-    routine,
+    routine: {
+      ...routine,
+      focusKey: routineFocusMap.get(routine.id)?.key ?? "general",
+      focusLabel: routineFocusMap.get(routine.id)?.label ?? "General",
+    },
     items: items.map((item) => ({
       ...item,
       primaryMuscleGroup: item.primaryMuscleGroup || "General",
@@ -262,6 +273,7 @@ export async function getRoutinesHubData(userId: string): Promise<RoutinesHubDat
       id: routineTemplates.id,
       name: routineTemplates.name,
       notes: routineTemplates.notes,
+      focusOverride: routineTemplates.focusOverride,
       updatedAt: routineTemplates.updatedAt,
       itemCount: sql<number>`count(${routineTemplateItems.id})`,
       latestScheduledDate: sql<string | null>`max(${trainingScheduleEntries.scheduledDate})`,
@@ -280,6 +292,7 @@ export async function getRoutinesHubData(userId: string): Promise<RoutinesHubDat
       routineTemplates.id,
       routineTemplates.name,
       routineTemplates.notes,
+      routineTemplates.focusOverride,
       routineTemplates.updatedAt,
     )
     .orderBy(desc(routineTemplates.updatedAt));
@@ -317,6 +330,7 @@ export async function getRoutinesHubData(userId: string): Promise<RoutinesHubDat
       latestScheduledDate: routine.latestScheduledDate ?? null,
       focusKey: routineFocusMap.get(routine.id)?.key ?? "general",
       focusLabel: routineFocusMap.get(routine.id)?.label ?? "General",
+      focusOverride: routine.focusOverride,
     })),
     librarySummary: {
       systemCount: Number(systemCountRow?.count ?? 0),

@@ -14,6 +14,7 @@ import {
   routineTemplates,
   runningKindEnum,
   scheduleEntryTypeEnum,
+  trainingFocusEnum,
   trainingScheduleEntries,
 } from "@/server/db/schema";
 import { getUserProfile, isProfileComplete } from "@/server/profile";
@@ -51,6 +52,18 @@ const routineSchema = z.object({
     .trim()
     .min(2, "Ponle un nombre a la rutina.")
     .max(80, "El nombre es demasiado largo."),
+});
+
+const routineVisualSchema = z.object({
+  routineTemplateId: z.string().uuid("La rutina no es valida."),
+  focusOverride: z
+    .string()
+    .trim()
+    .default("auto")
+    .refine(
+      (value) => value === "auto" || trainingFocusEnum.enumValues.includes(value as (typeof trainingFocusEnum.enumValues)[number]),
+      "Selecciona un foco visual valido.",
+    ),
 });
 
 const routineLaunchSchema = z.object({
@@ -343,6 +356,62 @@ export async function createRoutineAction(
       null,
       null,
     );
+  }
+}
+
+export async function updateRoutineVisualAction(
+  _previousState: RoutineItemActionState,
+  formData: FormData,
+): Promise<RoutineItemActionState> {
+  try {
+    const user = await requireUser();
+    const db = getDb();
+    const parsed = routineVisualSchema.parse({
+      routineTemplateId: String(formData.get("routineTemplateId") ?? ""),
+      focusOverride: String(formData.get("focusOverride") ?? "auto"),
+    });
+
+    const [routine] = await db
+      .select({
+        id: routineTemplates.id,
+      })
+      .from(routineTemplates)
+      .where(
+        and(
+          eq(routineTemplates.id, parsed.routineTemplateId),
+          eq(routineTemplates.ownerUserId, user.id),
+        ),
+      )
+      .limit(1);
+
+    if (!routine) {
+      throw new Error("No hemos encontrado esa rutina.");
+    }
+
+    await db
+      .update(routineTemplates)
+      .set({
+        focusOverride:
+          parsed.focusOverride === "auto"
+            ? null
+            : (parsed.focusOverride as (typeof trainingFocusEnum.enumValues)[number]),
+        updatedAt: new Date(),
+      })
+      .where(eq(routineTemplates.id, routine.id));
+
+    revalidatePath("/app");
+    revalidatePath("/app/routines");
+    revalidatePath(`/app/routines/${routine.id}`);
+
+    return {
+      error: null,
+      success: "Visual de rutina actualizado.",
+    };
+  } catch (error) {
+    return {
+      error: toActionError(error, "No se ha podido actualizar el visual de la rutina."),
+      success: null,
+    };
   }
 }
 

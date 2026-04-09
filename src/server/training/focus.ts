@@ -1,14 +1,15 @@
 import { eq, inArray } from "drizzle-orm";
 
+import type { TrainingFocusKey } from "@/lib/training-visuals";
+import { getTrainingFocusMeta, resolveTrainingFocus, type TrainingFocusMeta } from "@/lib/training-visuals";
 import type { getDb } from "@/server/db";
 import { exercises, routineTemplateItems } from "@/server/db/schema";
-import { resolveTrainingFocus, type TrainingFocusMeta } from "@/lib/training-visuals";
 
 type DbClient = ReturnType<typeof getDb>;
 
 export async function getRoutineFocusMap(
   db: DbClient,
-  routines: Array<{ id: string; name: string }>,
+  routines: Array<{ id: string; name: string; focusOverride?: TrainingFocusKey | null }>,
 ) {
   const routineIds = routines.map((routine) => routine.id);
 
@@ -36,10 +37,12 @@ export async function getRoutineFocusMap(
   return new Map<string, TrainingFocusMeta>(
     routines.map((routine) => [
       routine.id,
-      resolveTrainingFocus({
-        name: routine.name,
-        muscleGroups: groupsByRoutineId.get(routine.id) ?? [],
-      }),
+      routine.focusOverride
+        ? getTrainingFocusMeta(routine.focusOverride)
+        : resolveTrainingFocus({
+            name: routine.name,
+            muscleGroups: groupsByRoutineId.get(routine.id) ?? [],
+          }),
     ]),
   );
 }

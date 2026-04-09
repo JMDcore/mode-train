@@ -39,6 +39,16 @@ export const scheduleEntryTypeEnum = pgEnum("schedule_entry_type", [
   "running",
 ]);
 
+export const trainingFocusEnum = pgEnum("training_focus", [
+  "general",
+  "chest",
+  "back",
+  "shoulders",
+  "arms",
+  "legs",
+  "running",
+]);
+
 export const appUsers = pgTable(
   "app_users",
   {
@@ -119,6 +129,7 @@ export const routineTemplates = pgTable("routine_templates", {
     .references(() => appUsers.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 140 }).notNull(),
   notes: text("notes").default("").notNull(),
+  focusOverride: trainingFocusEnum("focus_override"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

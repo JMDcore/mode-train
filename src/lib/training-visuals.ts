@@ -12,6 +12,16 @@ export type TrainingFocusMeta = {
   label: string;
 };
 
+export const trainingFocusOptions: TrainingFocusMeta[] = [
+  { key: "general", label: "General" },
+  { key: "chest", label: "Pecho" },
+  { key: "back", label: "Espalda" },
+  { key: "shoulders", label: "Hombros" },
+  { key: "arms", label: "Brazos" },
+  { key: "legs", label: "Piernas" },
+  { key: "running", label: "Running" },
+];
+
 type FocusRule = {
   key: TrainingFocusKey;
   label: string;
@@ -99,6 +109,10 @@ const focusRules: FocusRule[] = [
     groupKeywords: ["general", "core", "abs", "full"],
   },
 ];
+
+export function getTrainingFocusMeta(key: TrainingFocusKey): TrainingFocusMeta {
+  return trainingFocusOptions.find((option) => option.key === key) ?? trainingFocusOptions[0]!;
+}
 
 function normalize(value: string) {
   return value

@@ -21,8 +21,11 @@ import {
   addRoutineItemAction,
   deleteRoutineItemAction,
   moveRoutineItemAction,
+  updateRoutineVisualAction,
   updateRoutineItemAction,
 } from "@/server/training/actions";
+import { AnatomyFocusArt } from "@/components/visuals/anatomy-focus-art";
+import { trainingFocusOptions } from "@/lib/training-visuals";
 import type { RoutineEditorData, RoutineItemDetail } from "@/server/training/routines";
 import type { RoutineItemActionState } from "@/server/training/types";
 
@@ -55,6 +58,15 @@ export function RoutineEditor(props: {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="detail-hero"
         >
+          <div className="routines-hero__art" aria-hidden="true">
+            <AnatomyFocusArt
+              focus={props.data.routine.focusKey}
+              frame="focus"
+              className="routines-hero__image"
+            />
+          </div>
+          <div className="routines-hero__veil" aria-hidden="true" />
+
           <div className="detail-hero__copy">
             <p className="detail-kicker">Rutina</p>
             <h1>{props.data.routine.name}</h1>
@@ -79,8 +91,18 @@ export function RoutineEditor(props: {
                 }).format(props.data.routine.updatedAt)}
               </strong>
             </div>
+            <div className="detail-stat">
+              <span>Visual</span>
+              <strong>{props.data.routine.focusLabel}</strong>
+            </div>
           </div>
         </motion.section>
+
+        <RoutineVisualCard
+          routineId={props.data.routine.id}
+          selectedFocus={props.data.routine.focusOverride}
+          resolvedFocus={props.data.routine.focusKey}
+        />
 
         <AddExerciseCard
           availableExercises={availableExercises}
@@ -119,6 +141,62 @@ export function RoutineEditor(props: {
         </section>
       </div>
     </main>
+  );
+}
+
+function RoutineVisualCard(props: {
+  routineId: string;
+  selectedFocus: RoutineEditorData["routine"]["focusOverride"];
+  resolvedFocus: RoutineEditorData["routine"]["focusKey"];
+}) {
+  const router = useRouter();
+  const [state, formAction] = useActionState(updateRoutineVisualAction, initialState);
+
+  useEffect(() => {
+    if (!state.success) {
+      return;
+    }
+
+    router.refresh();
+  }, [router, state.success]);
+
+  return (
+    <section className="detail-card detail-card--surface">
+      <div className="detail-card__head">
+        <div>
+          <p className="detail-kicker">Dirección visual</p>
+          <h2>Arte de la rutina</h2>
+        </div>
+        <span className="detail-badge">
+          <Dumbbell size={14} strokeWidth={2.3} />
+          {props.selectedFocus ? "Manual" : "Auto"}
+        </span>
+      </div>
+
+      <form action={formAction} className="editor-add-form">
+        <input type="hidden" name="routineTemplateId" value={props.routineId} />
+        <label className="editor-field">
+          <span>Foco anatómico</span>
+          <select name="focusOverride" defaultValue={props.selectedFocus ?? "auto"}>
+            <option value="auto">Automatico ({props.resolvedFocus})</option>
+            {trainingFocusOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <EditorSubmitButton
+          className="secondary-button"
+          label="Guardar visual"
+          icon={Save}
+        />
+      </form>
+
+      {state.error ? <p className="detail-feedback detail-feedback--error">{state.error}</p> : null}
+      {state.success ? <p className="detail-feedback">{state.success}</p> : null}
+    </section>
   );
 }
 

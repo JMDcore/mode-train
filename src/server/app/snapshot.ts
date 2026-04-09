@@ -33,6 +33,7 @@ export type AppSnapshot = {
     itemCount: number;
     focusKey: TrainingFocusKey;
     focusLabel: string;
+    focusOverride: TrainingFocusKey | null;
   }>;
   librarySummary: {
     systemCount: number;
@@ -125,6 +126,7 @@ export async function getAppSnapshot(params: {
       .select({
         id: routineTemplates.id,
         name: routineTemplates.name,
+        focusOverride: routineTemplates.focusOverride,
         itemCount: count(routineTemplateItems.id),
       })
       .from(routineTemplates)
@@ -202,6 +204,7 @@ export async function getAppSnapshot(params: {
       itemCount: Number(routine.itemCount ?? 0),
       focusKey: routineFocusMap.get(routine.id)?.key ?? "general",
       focusLabel: routineFocusMap.get(routine.id)?.label ?? "General",
+      focusOverride: routine.focusOverride ?? null,
     })),
     librarySummary: {
       systemCount: Number(systemExerciseCountRow?.count ?? 0),

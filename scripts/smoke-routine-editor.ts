@@ -107,6 +107,13 @@ async function main() {
       });
 
     await db
+      .update(routineTemplates)
+      .set({
+        focusOverride: "back",
+      })
+      .where(eq(routineTemplates.id, routine.id));
+
+    await db
       .update(routineTemplateItems)
       .set({
         targetSets: 5,
@@ -157,6 +164,8 @@ async function main() {
       editorData.items[1]?.exerciseId !== libraryExercises[1].id ||
       editorData.items[1]?.targetSets !== 5 ||
       editorData.items[1]?.notes !== "Top set y back-offs" ||
+      editorData.routine.focusOverride !== "back" ||
+      editorData.routine.focusKey !== "back" ||
       latestRoutine.id !== routine.id
     ) {
       throw new Error("La rutina editada no refleja el estado esperado.");
