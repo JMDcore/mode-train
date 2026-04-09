@@ -120,8 +120,8 @@ export function WorkoutSession(props: {
             </h1>
             <p>
               {props.detail.isFinished
-                ? `Sesion del ${props.detail.performedOnLabel}, cerrada el ${props.detail.finishedAtLabel ?? props.detail.startedAtLabel}. Puedes corregir sets si te dejaste algo.`
-                : `Entreno fijado para ${props.detail.performedOnLabel}. Guarda por bloques y sigue fino.`}
+                ? `Sesion del ${props.detail.performedOnLabel}. Puedes corregir sets si hace falta.`
+                : `Entreno para ${props.detail.performedOnLabel}. Guarda por bloques.`}
             </p>
             <div className="workout-progress-dots" aria-hidden="true">
               {Array.from({ length: props.detail.totalExercises }).map((_, index) => (
