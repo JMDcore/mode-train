@@ -50,7 +50,7 @@ export function RoutinesHub(props: {
 }) {
   const [activeView, setActiveView] = useState<"routines" | "pool">("routines");
   const featuredRoutine = props.data.routines[0] ?? null;
-  const visibleExercises = props.data.availableExercises.slice(0, 12);
+  const visibleExercises = props.data.availableExercises.slice(0, 8);
   const totalPool = props.data.librarySummary.systemCount + props.data.librarySummary.customCount;
 
   return (
@@ -144,6 +144,21 @@ export function RoutinesHub(props: {
             </button>
           </div>
 
+          <div className="routine-studio__summary">
+            <div className="routine-studio__summary-item">
+              <span>Rutinas</span>
+              <strong>{props.data.routines.length}</strong>
+            </div>
+            <div className="routine-studio__summary-item">
+              <span>Pool</span>
+              <strong>{totalPool}</strong>
+            </div>
+            <div className="routine-studio__summary-item">
+              <span>Propios</span>
+              <strong>{props.data.librarySummary.customCount}</strong>
+            </div>
+          </div>
+
           {activeView === "routines" ? (
             <div className="detail-stack">
               <CreateRoutineCard />
@@ -215,16 +230,15 @@ function RoutineStudioCard(props: {
     <article
       className={`routine-studio-card${props.emphasized ? " routine-studio-card--emphasized" : ""}`}
     >
-      <div className="routine-studio-card__art" aria-hidden="true">
+      <div className="routine-studio-card__thumb" aria-hidden="true">
         <Image
           src="/media/anatomy-mannequin.svg"
           alt=""
           fill
           sizes="(max-width: 768px) 100vw, 30rem"
-          className="routine-studio-card__image"
+          className="routine-studio-card__thumb-image"
         />
       </div>
-      <div className="routine-studio-card__veil" aria-hidden="true" />
 
       <div className="routine-studio-card__body">
         <div className="routine-studio-card__top">
@@ -236,6 +250,11 @@ function RoutineStudioCard(props: {
           <p className="detail-kicker">Rutina guardada</p>
           <h2>{props.routine.name}</h2>
           <p>{helper}</p>
+        </div>
+
+        <div className="routine-studio-card__meta">
+          <span>{formatScheduledDate(props.routine.latestScheduledDate)}</span>
+          <span>{props.routine.itemCount > 0 ? "Lista para registrar" : "Pendiente de completar"}</span>
         </div>
 
         <div className="routine-studio-card__footer">

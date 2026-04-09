@@ -1060,57 +1060,100 @@ function ProfileScreen(props: {
   profile: UserProfile;
   snapshot: AppSnapshot;
 }) {
+  const weekPlanned = props.snapshot.schedule.days.reduce((acc, day) => acc + day.plannedCount, 0);
+  const totalPool = props.snapshot.librarySummary.systemCount + props.snapshot.librarySummary.customCount;
   const metrics = [
-    props.profile.heightCm ? `${props.profile.heightCm} cm` : "--",
-    props.profile.weightKg ? `${props.profile.weightKg} kg` : "--",
-    `${props.snapshot.librarySummary.systemCount + props.snapshot.librarySummary.customCount} ejercicios`,
+    { label: "Altura", value: props.profile.heightCm ? `${props.profile.heightCm} cm` : "--" },
+    { label: "Peso", value: props.profile.weightKg ? `${props.profile.weightKg} kg` : "--" },
+    { label: "Rutinas", value: `${props.snapshot.routines.length}` },
+    { label: "Pool", value: `${totalPool}` },
   ];
 
   return (
     <div className="mt-screen">
-      <section className="mt-profile-card">
-        <div className="mt-profile-card__hero">
-          <div className="mt-profile-avatar">{props.profile.displayName.charAt(0)}</div>
+      <section className="mt-profile-card mt-profile-card--feature">
+        <div className="mt-profile-card__art" aria-hidden="true">
+          <Image
+            src="/media/anatomy-mannequin.svg"
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 40vw"
+            className="mt-profile-card__image"
+          />
+        </div>
+        <div className="mt-profile-card__veil" aria-hidden="true" />
+
+        <div className="mt-profile-card__surface">
+          <div className="mt-profile-card__hero">
+            <div className="mt-profile-card__identity">
+              <div className="mt-profile-avatar">{props.profile.displayName.charAt(0)}</div>
+              <div>
+                <p className="mt-kicker">Perfil</p>
+                <h2>{props.profile.displayName}</h2>
+                <span>{props.snapshot.goalLabel}</span>
+              </div>
+            </div>
+            <span className="mt-chip mt-chip--violet">{props.snapshot.levelLabel}</span>
+          </div>
+
+          <div className="mt-profile-metrics mt-profile-metrics--grid">
+            {metrics.map((metric) => (
+              <div key={metric.label} className="mt-profile-metrics__item mt-profile-metrics__item--detailed">
+                <span>{metric.label}</span>
+                <strong>{metric.value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-profile-summary-row">
+            <div className="mt-profile-summary-pill">
+              <span>Semana</span>
+              <strong>{weekPlanned} bloques</strong>
+            </div>
+            <div className="mt-profile-summary-pill mt-profile-summary-pill--ghost">
+              <span>Mes</span>
+              <strong>
+                {props.snapshot.summary.gym.month.sessions} gym · {props.snapshot.summary.running.month.sessions} run
+              </strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-profile-links mt-profile-links--grid">
+        <Link href="/onboarding" className="mt-mini-panel mt-mini-panel--link">
+          <div className="mt-mini-panel__icon">
+            <PencilLine size={18} strokeWidth={2.2} />
+          </div>
           <div>
-            <p className="mt-kicker">Perfil</p>
-            <h2>{props.profile.displayName}</h2>
-            <span>{props.snapshot.goalLabel}</span>
+            <p>Editar perfil</p>
+            <span>Ajusta tus datos base y tu objetivo</span>
+          </div>
+        </Link>
+
+        <Link href="/app/routines" className="mt-mini-panel mt-mini-panel--link">
+          <div className="mt-mini-panel__icon">
+            <Sparkles size={18} strokeWidth={2.2} />
+          </div>
+          <div>
+            <p>Rutinas y ejercicios</p>
+            <span>Gestiona tus plantillas y tu pool personalizado</span>
+          </div>
+        </Link>
+
+        <div className="mt-mini-panel mt-profile-note">
+          <div className="mt-mini-panel__icon">
+            <CalendarDays size={18} strokeWidth={2.2} />
+          </div>
+          <div>
+            <p>Bloque activo</p>
+            <span>Tu agenda y tu resumen ya están conectados al mismo sistema de progreso.</span>
           </div>
         </div>
 
-        <div className="mt-profile-metrics">
-          {metrics.map((metric) => (
-            <div key={metric} className="mt-profile-metrics__item">
-              {metric}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-profile-links">
-          <Link href="/onboarding" className="mt-mini-panel mt-mini-panel--link">
-            <div className="mt-mini-panel__icon">
-              <PencilLine size={18} strokeWidth={2.2} />
-            </div>
-            <div>
-              <p>Editar perfil</p>
-              <span>Ajusta tus datos base y tu objetivo</span>
-            </div>
-          </Link>
-
-          <Link href="/app/routines" className="mt-mini-panel mt-mini-panel--link">
-            <div className="mt-mini-panel__icon">
-              <Sparkles size={18} strokeWidth={2.2} />
-            </div>
-            <div>
-              <p>Rutinas y ejercicios</p>
-              <span>Gestiona tus plantillas y tu pool personalizado</span>
-            </div>
-          </Link>
-
-          <Link href="/logout" className="mt-secondary-pill mt-secondary-pill--block">
-            Cerrar sesion
-          </Link>
-        </div>
+        <Link href="/logout" className="mt-secondary-pill mt-secondary-pill--block">
+          Cerrar sesion
+        </Link>
       </section>
     </div>
   );
