@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, or, sql } from "drizzle-orm";
 
+import type { TrainingFocusKey } from "@/lib/training-visuals";
 import { getDb } from "@/server/db";
 import {
   exerciseCategories,
@@ -8,6 +9,7 @@ import {
   routineTemplates,
   trainingScheduleEntries,
 } from "@/server/db/schema";
+import { getRoutineFocusMap } from "@/server/training/focus";
 
 export type RoutineItemDetail = {
   id: string;
@@ -52,6 +54,8 @@ export type RoutinesHubData = {
     itemCount: number;
     updatedAt: Date;
     latestScheduledDate: string | null;
+    focusKey: TrainingFocusKey;
+    focusLabel: string;
   }>;
   librarySummary: {
     systemCount: number;
@@ -304,12 +308,15 @@ export async function getRoutinesHubData(userId: string): Promise<RoutinesHubDat
     .from(exercises)
     .where(or(eq(exercises.isSystem, true), eq(exercises.ownerUserId, userId)))
     .orderBy(asc(exercises.name));
+  const routineFocusMap = await getRoutineFocusMap(db, routines);
 
   return {
     routines: routines.map((routine) => ({
       ...routine,
       itemCount: Number(routine.itemCount ?? 0),
       latestScheduledDate: routine.latestScheduledDate ?? null,
+      focusKey: routineFocusMap.get(routine.id)?.key ?? "general",
+      focusLabel: routineFocusMap.get(routine.id)?.label ?? "General",
     })),
     librarySummary: {
       systemCount: Number(systemCountRow?.count ?? 0),

@@ -27,6 +27,7 @@ import { useActionState, useEffect, useMemo, useRef, useState, type CSSPropertie
 import { useFormStatus } from "react-dom";
 
 import { cn } from "@/lib/utils";
+import { resolveTrainingFocus } from "@/lib/training-visuals";
 import type { AppSnapshot } from "@/server/app/snapshot";
 import type { AuthUser } from "@/server/auth/user";
 import type { UserProfile } from "@/server/profile";
@@ -42,6 +43,7 @@ import type {
   WorkoutLaunchActionState,
 } from "@/server/training/types";
 import { StartWorkoutButton } from "@/components/training/start-workout-button";
+import { AnatomyFocusArt } from "@/components/visuals/anatomy-focus-art";
 
 const transition = {
   duration: 0.42,
@@ -227,11 +229,9 @@ function HomeScreen(props: {
     <div className="mt-screen mt-screen--home">
       <section className="mt-home-analytics">
         <div className="mt-home-analytics__art" aria-hidden="true">
-          <Image
-            src="/media/anatomy-mannequin.svg"
-            alt=""
-            fill
-            sizes="(max-width: 768px) 100vw, 40vw"
+          <AnatomyFocusArt
+            focus={featuredRoutine?.focusKey ?? "general"}
+            frame="focus"
             className="mt-home-analytics__image"
           />
         </div>
@@ -342,7 +342,6 @@ function HomeScreen(props: {
             scheduledCount={weekPlanned}
             gymTodayCount={gymTodayCount}
             runTodayCount={runTodayCount}
-            levelLabel={props.snapshot.levelLabel}
             goalLabel={props.snapshot.goalLabel}
           />
         ) : (
@@ -421,7 +420,6 @@ function HomeFeatureCard(props: {
   scheduledCount: number;
   gymTodayCount: number;
   runTodayCount: number;
-  levelLabel: string;
   goalLabel: string;
 }) {
   const hasAgenda = props.gymTodayCount + props.runTodayCount > 0;
@@ -429,11 +427,9 @@ function HomeFeatureCard(props: {
   return (
     <article className="mt-home-feature-card">
       <div className="mt-home-feature-card__art" aria-hidden="true">
-        <Image
-          src="/media/anatomy-mannequin.svg"
-          alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 40vw"
+        <AnatomyFocusArt
+          focus={props.routine.focusKey}
+          frame="focus"
           className="mt-home-feature-card__image"
         />
       </div>
@@ -441,7 +437,7 @@ function HomeFeatureCard(props: {
 
       <div className="mt-home-feature-card__body">
         <div className="mt-home-feature-card__top">
-          <span className="mt-chip mt-chip--violet">{props.levelLabel}</span>
+          <span className="mt-chip mt-chip--violet">{props.routine.focusLabel}</span>
           <span className="mt-chip mt-chip--lime">
             {props.routine.itemCount > 0 ? `${props.routine.itemCount} ejercicios` : "Vacia"}
           </span>
@@ -498,7 +494,7 @@ function RoutineMiniCard(props: {
   return (
     <article className={cn("mt-routine-mini-card", props.isActive && "mt-routine-mini-card--active")}>
       <div className="mt-routine-mini-card__copy">
-        <span>{props.isActive ? "Sesion abierta" : "Plantilla"}</span>
+        <span>{props.isActive ? `${props.routine.focusLabel} · activa` : props.routine.focusLabel}</span>
         <strong>{props.routine.name}</strong>
         <p>
           {props.routine.itemCount > 0 ? `${props.routine.itemCount} ejercicios` : "Completa la plantilla"}
@@ -704,6 +700,10 @@ function SummaryScreen(props: {
     props.snapshot.summary.gymRecords.find((record) => record.exerciseId === selectedGymRecordId) ??
     props.snapshot.summary.gymRecords[0] ??
     null;
+  const selectedBodyFocus = resolveTrainingFocus({
+    name: selectedGymRecord?.exerciseName,
+    muscleGroups: selectedGymRecord ? [selectedGymRecord.primaryMuscleGroup] : [],
+  });
   const bodyRecords = props.snapshot.summary.gymRecords.slice(0, 6);
   const gymSessions = parseMetricNumber(props.snapshot.summary.gym[scope].sessions);
   const runningSessions = parseMetricNumber(props.snapshot.summary.running[scope].sessions);
@@ -874,12 +874,11 @@ function SummaryScreen(props: {
               </div>
 
               <div className="mt-body-stage__art">
-                <Image
-                  src="/media/anatomy-mannequin.svg"
-                  alt="Anatomia muscular"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 44vw"
+                <AnatomyFocusArt
+                  focus={selectedBodyFocus.key}
+                  frame="full"
                   className="mt-body-stage__image"
+                  title={`Foco anatómico de ${selectedBodyFocus.label}`}
                 />
 
                 <div className="mt-body-stage__overlay" />
@@ -888,7 +887,9 @@ function SummaryScreen(props: {
                   <div className="mt-body-stage__measure">
                     <div>
                       <strong>{selectedGymRecord.exerciseName}</strong>
-                      <span>Top set · {selectedGymRecord.dateLabel}</span>
+                      <span>
+                        {selectedBodyFocus.label} · {selectedGymRecord.dateLabel}
+                      </span>
                     </div>
                     <div className="mt-body-stage__measure-aside">
                       <small>Actual</small>

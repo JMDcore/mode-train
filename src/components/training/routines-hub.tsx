@@ -6,12 +6,12 @@ import {
   Plus,
 } from "lucide-react";
 import { motion } from "motion/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 
 import { StartWorkoutButton } from "@/components/training/start-workout-button";
+import { AnatomyFocusArt } from "@/components/visuals/anatomy-focus-art";
 import {
   createCustomExerciseAction,
   createRoutineAction,
@@ -70,11 +70,9 @@ export function RoutinesHub(props: {
           className="detail-hero routines-hero routines-hero--visual"
         >
           <div className="routines-hero__art" aria-hidden="true">
-            <Image
-              src="/media/anatomy-mannequin.svg"
-              alt=""
-              fill
-              sizes="(max-width: 768px) 100vw, 30rem"
+            <AnatomyFocusArt
+              focus={featuredRoutine?.focusKey ?? "general"}
+              frame="focus"
               className="routines-hero__image"
             />
           </div>
@@ -83,7 +81,7 @@ export function RoutinesHub(props: {
           <div className="routines-hero__content">
             <div className="routines-hero__top">
               <span className="mt-chip mt-chip--violet">
-                {featuredRoutine ? "Rutina foco" : "Pool abierto"}
+                {featuredRoutine ? featuredRoutine.focusLabel : "Pool abierto"}
               </span>
               <span className="mt-chip mt-chip--lime">
                 {featuredRoutine ? `${featuredRoutine.itemCount} ejercicios` : `${totalPool} ejercicios`}
@@ -231,18 +229,16 @@ function RoutineStudioCard(props: {
       className={`routine-studio-card${props.emphasized ? " routine-studio-card--emphasized" : ""}`}
     >
       <div className="routine-studio-card__thumb" aria-hidden="true">
-        <Image
-          src="/media/anatomy-mannequin.svg"
-          alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 30rem"
+        <AnatomyFocusArt
+          focus={props.routine.focusKey}
+          frame="focus"
           className="routine-studio-card__thumb-image"
         />
       </div>
 
       <div className="routine-studio-card__body">
         <div className="routine-studio-card__top">
-          <span className="mt-chip mt-chip--violet">Plantilla</span>
+          <span className="mt-chip mt-chip--violet">{props.routine.focusLabel}</span>
           <span className="mt-chip mt-chip--lime">{props.routine.itemCount} ejercicios</span>
         </div>
 

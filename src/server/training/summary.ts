@@ -23,6 +23,7 @@ export type SummaryOverview = {
   gymRecords: Array<{
     exerciseId: string;
     exerciseName: string;
+    primaryMuscleGroup: string;
     weightLabel: string;
     dateLabel: string;
   }>;
@@ -192,6 +193,7 @@ async function getGymRecords(userId: string) {
     .select({
       exerciseId: workoutSets.exerciseId,
       exerciseName: exercises.name,
+      primaryMuscleGroup: exercises.primaryMuscleGroup,
       weightKg: workoutSets.weightKg,
       performedOn: workoutSessions.performedOn,
       finishedAt: workoutSessions.finishedAt,
@@ -214,6 +216,7 @@ async function getGymRecords(userId: string) {
     {
       exerciseId: string;
       exerciseName: string;
+      primaryMuscleGroup: string;
       weightKg: number | null;
       performedOn: string;
       finishedAt: Date | null;
@@ -232,6 +235,7 @@ async function getGymRecords(userId: string) {
     .map((record) => ({
       exerciseId: record.exerciseId,
       exerciseName: record.exerciseName,
+      primaryMuscleGroup: record.primaryMuscleGroup || "General",
       weightLabel: formatWeight(record.weightKg),
       dateLabel: record.performedOn
         ? formatIsoDate(record.performedOn)

@@ -4,6 +4,8 @@ import type { UserProfile } from "@/server/profile";
 import type { AuthUser } from "@/server/auth/user";
 import { getDb } from "@/server/db";
 import { exercises, routineTemplateItems, routineTemplates } from "@/server/db/schema";
+import type { TrainingFocusKey } from "@/lib/training-visuals";
+import { getRoutineFocusMap } from "@/server/training/focus";
 import { getScheduleOverview, type ScheduleOverview } from "@/server/training/schedule";
 import { getSummaryOverview, type SummaryOverview } from "@/server/training/summary";
 import { getActiveWorkoutSummary, type ActiveWorkoutSummary } from "@/server/training/workouts";
@@ -29,6 +31,8 @@ export type AppSnapshot = {
     id: string;
     name: string;
     itemCount: number;
+    focusKey: TrainingFocusKey;
+    focusLabel: string;
   }>;
   librarySummary: {
     systemCount: number;
@@ -143,6 +147,7 @@ export async function getAppSnapshot(params: {
       .where(and(eq(exercises.ownerUserId, user.id), eq(exercises.isSystem, false)))
       .then((rows) => rows[0]),
   ]);
+  const routineFocusMap = await getRoutineFocusMap(db, routines);
 
   const todayScheduledGym =
     schedule.todayEntries.find((entry) => entry.entryType === "gym" && entry.routineTemplateId) ??
@@ -195,6 +200,8 @@ export async function getAppSnapshot(params: {
       id: routine.id,
       name: routine.name,
       itemCount: Number(routine.itemCount ?? 0),
+      focusKey: routineFocusMap.get(routine.id)?.key ?? "general",
+      focusLabel: routineFocusMap.get(routine.id)?.label ?? "General",
     })),
     librarySummary: {
       systemCount: Number(systemExerciseCountRow?.count ?? 0),

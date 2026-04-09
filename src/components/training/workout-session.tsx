@@ -14,7 +14,6 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -24,11 +23,13 @@ import {
   saveWorkoutExerciseBlockAction,
 } from "@/server/training/actions";
 import { cn } from "@/lib/utils";
+import { resolveTrainingFocus } from "@/lib/training-visuals";
 import type { WorkoutSessionDetail } from "@/server/training/workouts";
 import type {
   WorkoutCompleteActionState,
   WorkoutExerciseBlockActionState,
 } from "@/server/training/types";
+import { AnatomyFocusArt } from "@/components/visuals/anatomy-focus-art";
 
 type SetDraft = {
   id: string;
@@ -77,6 +78,10 @@ export function WorkoutSession(props: {
       props.detail.exercises[0]?.routineItemId ??
       "",
   );
+  const workoutFocus = resolveTrainingFocus({
+    name: props.detail.routineName,
+    muscleGroups: props.detail.exercises.map((exercise) => exercise.primaryMuscleGroup),
+  });
 
   return (
     <main className="detail-page">
@@ -95,19 +100,20 @@ export function WorkoutSession(props: {
           className="detail-hero workout-detail-hero"
         >
           <div className="workout-detail-hero__image">
-            <Image
-              src="/media/anatomy-mannequin.svg"
-              alt="Workout focus"
-              fill
-              sizes="(max-width: 768px) 100vw, 40vw"
+            <AnatomyFocusArt
+              focus={workoutFocus.key}
+              frame="focus"
               className="workout-detail-hero__photo"
+              title={`Foco anatómico de ${workoutFocus.label}`}
             />
           </div>
 
           <div className="workout-detail-hero__overlay" />
 
           <div className="detail-hero__copy">
-            <p className="detail-kicker">{props.detail.isFinished ? "Sesion editable" : "Bloque"}</p>
+            <p className="detail-kicker">
+              {props.detail.isFinished ? `${workoutFocus.label} · editable` : workoutFocus.label}
+            </p>
             <h1>
               {props.detail.routineName} <span>{exerciseProgress}/{props.detail.totalExercises}</span>
             </h1>
