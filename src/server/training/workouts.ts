@@ -515,3 +515,31 @@ export async function completeWorkoutSession(userId: string, sessionId: string) 
     })
     .where(eq(workoutSessions.id, session.id));
 }
+
+export async function cancelWorkoutSession(userId: string, sessionId: string) {
+  const db = getDb();
+
+  const [session] = await db
+    .select({
+      id: workoutSessions.id,
+      finishedAt: workoutSessions.finishedAt,
+    })
+    .from(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.id, sessionId),
+        eq(workoutSessions.userId, userId),
+      ),
+    )
+    .limit(1);
+
+  if (!session) {
+    throw new Error("No hemos encontrado esta sesion.");
+  }
+
+  if (session.finishedAt) {
+    throw new Error("Solo puedes cancelar sesiones que sigan abiertas.");
+  }
+
+  await db.delete(workoutSessions).where(eq(workoutSessions.id, session.id));
+}

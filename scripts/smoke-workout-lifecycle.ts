@@ -15,6 +15,7 @@ import {
 import { getUserProfile } from "../src/server/profile";
 import { getScheduleOverview } from "../src/server/training/schedule";
 import {
+  cancelWorkoutSession,
   completeWorkoutSession,
   getActiveWorkoutSummary,
   getWorkoutSessionDetail,
@@ -181,6 +182,26 @@ async function main() {
 
     if (!scheduledDay || scheduledDay.completedCount < 1) {
       throw new Error("La agenda semanal no refleja el gym registrado en la fecha elegida.");
+    }
+
+    const cancelledStart = await startOrResumeWorkoutSession(createdUser.id, routine.id, performedOn);
+
+    await saveWorkoutExerciseBlock({
+      userId: createdUser.id,
+      sessionId: cancelledStart.sessionId,
+      exerciseId: firstItem.exerciseId,
+      sets: [
+        { weightKg: 80, reps: 8, rir: 2 },
+      ],
+    });
+
+    await cancelWorkoutSession(createdUser.id, cancelledStart.sessionId);
+
+    const detailAfterCancel = await getWorkoutSessionDetail(createdUser.id, cancelledStart.sessionId);
+    const activeAfterCancel = await getActiveWorkoutSummary(createdUser.id);
+
+    if (detailAfterCancel !== null || activeAfterCancel !== null) {
+      throw new Error("La cancelacion no ha limpiado correctamente la sesion abierta.");
     }
 
     console.log("Smoke workout lifecycle ok:", {

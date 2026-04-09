@@ -158,9 +158,9 @@ export function ModeTrainApp(props: {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 16, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -8, filter: "blur(8px)" }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
               transition={transition}
               className="screen-stack"
             >
@@ -876,7 +876,7 @@ function SummaryScreen(props: {
               <div className="mt-body-stage__art">
                 <AnatomyFocusArt
                   focus={selectedBodyFocus.key}
-                  frame="full"
+                  frame="focus"
                   className="mt-body-stage__image"
                   title={`Foco anatómico de ${selectedBodyFocus.label}`}
                 />

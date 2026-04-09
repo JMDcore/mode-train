@@ -39,6 +39,7 @@ import type {
   WorkoutLaunchActionState,
 } from "@/server/training/types";
 import {
+  cancelWorkoutSession,
   completeWorkoutSession,
   saveWorkoutExerciseBlock,
   startOrResumeWorkoutSession,
@@ -477,6 +478,34 @@ export async function completeWorkoutSessionAction(
 
     return createWorkoutCompleteState(
       toActionError(error, "No se ha podido cerrar la sesion."),
+      null,
+      null,
+    );
+  }
+}
+
+export async function cancelWorkoutSessionAction(
+  _previousState: WorkoutCompleteActionState,
+  formData: FormData,
+): Promise<WorkoutCompleteActionState> {
+  try {
+    const user = await requireUser();
+    const parsed = workoutCompleteSchema.parse({
+      sessionId: String(formData.get("sessionId") ?? ""),
+    });
+
+    await cancelWorkoutSession(user.id, parsed.sessionId);
+
+    revalidatePath("/app");
+    revalidatePath(`/app/workouts/${parsed.sessionId}`);
+    redirect("/app?success=workout-cancelled");
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
+    return createWorkoutCompleteState(
+      toActionError(error, "No se ha podido cancelar la sesion."),
       null,
       null,
     );

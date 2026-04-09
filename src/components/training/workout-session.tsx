@@ -19,6 +19,7 @@ import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
+  cancelWorkoutSessionAction,
   completeWorkoutSessionAction,
   saveWorkoutExerciseBlockAction,
 } from "@/server/training/actions";
@@ -406,6 +407,7 @@ function SaveBlockButton() {
 
 function CompleteWorkoutCard(props: { sessionId: string }) {
   const [state, formAction] = useActionState(completeWorkoutSessionAction, initialCompleteState);
+  const [cancelState, cancelAction] = useActionState(cancelWorkoutSessionAction, initialCompleteState);
 
   return (
     <section className="detail-card detail-card--surface complete-session-card">
@@ -429,8 +431,15 @@ function CompleteWorkoutCard(props: { sessionId: string }) {
         <CompleteWorkoutButton />
       </form>
 
+      <form action={cancelAction}>
+        <input type="hidden" name="sessionId" value={props.sessionId} />
+        <CancelWorkoutButton />
+      </form>
+
       {state.error ? <p className="detail-feedback detail-feedback--error">{state.error}</p> : null}
       {state.success ? <p className="detail-feedback">{state.success}</p> : null}
+      {cancelState.error ? <p className="detail-feedback detail-feedback--error">{cancelState.error}</p> : null}
+      {cancelState.success ? <p className="detail-feedback">{cancelState.success}</p> : null}
     </section>
   );
 }
@@ -446,6 +455,21 @@ function CompleteWorkoutButton() {
         <Check size={16} strokeWidth={2.3} />
       )}
       {pending ? "Cerrando..." : "Completar sesion"}
+    </button>
+  );
+}
+
+function CancelWorkoutButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" className="ghost-button ghost-button--danger" disabled={pending}>
+      {pending ? (
+        <LoaderCircle size={16} strokeWidth={2.3} className="spin-icon" />
+      ) : (
+        <X size={16} strokeWidth={2.3} />
+      )}
+      {pending ? "Cancelando..." : "Cancelar sesion"}
     </button>
   );
 }

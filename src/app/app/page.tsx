@@ -32,9 +32,17 @@ export default async function ProtectedAppPage(props: {
       user={user}
       profile={profile}
       snapshot={snapshot}
-      completionMessage={
-        searchParams?.success === "workout-completed" ? "Sesion completada y guardada." : null
-      }
+      completionMessage={(() => {
+        if (searchParams?.success === "workout-completed") {
+          return "Sesion completada y guardada.";
+        }
+
+        if (searchParams?.success === "workout-cancelled") {
+          return "Sesion cancelada.";
+        }
+
+        return null;
+      })()}
     />
   );
 }
