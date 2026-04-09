@@ -293,25 +293,6 @@ function HomeScreen(props: {
             ))}
           </div>
 
-          <div className="mt-home-analytics__actions">
-            <button
-              type="button"
-              className="mt-home-inline-action"
-              onClick={() => props.onNavigate("agenda")}
-            >
-              <CalendarDays size={16} strokeWidth={2.2} />
-              Agenda
-            </button>
-            <button
-              type="button"
-              className="mt-home-inline-action mt-home-inline-action--accent"
-              onClick={() => props.onNavigate("summary")}
-            >
-              <Activity size={16} strokeWidth={2.2} />
-              Resumen
-            </button>
-          </div>
-
           <div className="mt-week-strip mt-week-strip--hero">
             {props.snapshot.schedule.days.map((day) => (
               <button
@@ -471,8 +452,8 @@ function HomeFeatureCard(props: {
           <h3>{props.routine.name}</h3>
           <p>
             {hasAgenda
-              ? `${props.gymTodayCount} gym · ${props.runTodayCount} running hoy. Todo listo para ${props.goalLabel.toLowerCase()}.`
-              : `Plantilla principal preparada para registrar sets y construir progreso real.`}
+              ? `${props.gymTodayCount} gym · ${props.runTodayCount} running hoy. Listo para ${props.goalLabel.toLowerCase()}.`
+              : "Plantilla lista para registrar sets y construir progreso."}
           </p>
         </div>
 
@@ -501,7 +482,7 @@ function HomeFeatureCard(props: {
             />
           )}
           <Link href="/app/routines" className="mt-secondary-pill">
-            Gestionar
+            Editar
           </Link>
         </div>
       </div>
@@ -520,9 +501,7 @@ function RoutineMiniCard(props: {
         <span>{props.isActive ? "Sesion abierta" : "Plantilla"}</span>
         <strong>{props.routine.name}</strong>
         <p>
-          {props.routine.itemCount > 0
-            ? `${props.routine.itemCount} ejercicios listos`
-            : "Completa la rutina con ejercicios de tu pool"}
+          {props.routine.itemCount > 0 ? `${props.routine.itemCount} ejercicios` : "Completa la plantilla"}
         </p>
       </div>
 
@@ -558,19 +537,19 @@ function AgendaScreen(props: {
   const composerMeta = {
     "plan-gym": {
       title: "Planifica gym",
-      description: "Deja fijada la rutina del dia y la app la propondrá cuando toque entrenar.",
+      description: "Fija una rutina para este dia.",
     },
     "plan-running": {
       title: "Planifica running",
-      description: "Agenda una salida suave, tempo o libre aunque no sepas aun la distancia.",
+      description: "Agenda una salida, con o sin objetivo.",
     },
     "log-gym": {
       title: "Registrar gym",
-      description: "Lanza un entreno hoy o a posteriori y deja los sets guardados con fecha real.",
+      description: "Registra un entreno de hoy o de dias pasados.",
     },
     "log-running": {
       title: "Registrar running",
-      description: "Guarda una carrera hecha y súmala al historial y al resumen al instante.",
+      description: "Guarda una carrera hecha y actualiza tu resumen.",
     },
   }[composerMode];
 
@@ -670,10 +649,10 @@ function AgendaScreen(props: {
 
         <div className="mt-agenda-composer__tabs">
           {[
-            { key: "plan-gym", label: "Gym", icon: Dumbbell },
-            { key: "plan-running", label: "Run", icon: Footprints },
-            { key: "log-gym", label: "Gym hecho", icon: PencilLine },
-            { key: "log-running", label: "Run hecho", icon: Route },
+            { key: "plan-gym", label: "Plan gym", icon: Dumbbell },
+            { key: "plan-running", label: "Plan run", icon: Footprints },
+            { key: "log-gym", label: "Gym", icon: PencilLine },
+            { key: "log-running", label: "Run", icon: Route },
           ].map((item) => (
             <button
               key={item.key}
@@ -764,7 +743,7 @@ function SummaryScreen(props: {
           {[
             { key: "general", label: "General" },
             { key: "body", label: "Body" },
-            { key: "running", label: "Running" },
+            { key: "running", label: "Run" },
           ].map((item) => (
             <button
               key={item.key}
@@ -971,7 +950,7 @@ function SummaryScreen(props: {
                     <div className="mt-record-row mt-record-row--feature">
                       <div>
                         <strong>{selectedGymRecord.exerciseName}</strong>
-                        <span>Serie mas pesada registrada el {selectedGymRecord.dateLabel}</span>
+                        <span>Serie top · {selectedGymRecord.dateLabel}</span>
                       </div>
                       <em>{selectedGymRecord.weightLabel}</em>
                     </div>
@@ -1288,7 +1267,7 @@ function ScheduleRunCard(props: {
           <p className="mt-kicker">Planificar</p>
           <h3>Running</h3>
         </div>
-        <span className="mt-chip mt-chip--lime">Libre o con objetivo</span>
+        <span className="mt-chip mt-chip--lime">Flexible</span>
       </div>
 
       <form ref={formRef} action={formAction} className="mt-form-grid">
@@ -1429,7 +1408,7 @@ function GymLogCard(props: {
           <p className="mt-kicker">Registrar</p>
           <h3>Gym hecho</h3>
         </div>
-        <span className="mt-chip mt-chip--violet">Manual o en directo</span>
+        <span className="mt-chip mt-chip--violet">Desde rutina</span>
       </div>
 
       <form action={formAction} className="mt-form-grid">

@@ -5822,9 +5822,10 @@ textarea:focus-visible {
 .mt-home-analytics__current strong {
   display: block;
   margin-top: 0.16rem;
-  font-size: 1.48rem;
+  font-size: 1.4rem;
   line-height: 1.05;
   letter-spacing: -0.06em;
+  text-wrap: balance;
 }
 
 .mt-home-analytics__cluster {
@@ -5873,7 +5874,7 @@ textarea:focus-visible {
 }
 
 .mt-home-period {
-  margin-top: 1rem;
+  margin-top: 0.82rem;
   display: grid;
   grid-template-columns: 3rem 1fr 3rem;
   align-items: center;
@@ -5900,7 +5901,7 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   padding: 0 1rem;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -6044,7 +6045,7 @@ textarea:focus-visible {
 
 .mt-agenda-composer__tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0.35rem;
   border-radius: 1.45rem;
@@ -6052,13 +6053,13 @@ textarea:focus-visible {
 }
 
 .mt-agenda-composer__tab {
-  min-height: 2.7rem;
-  padding: 0 0.55rem;
+  min-height: 2.9rem;
+  padding: 0 0.7rem;
   border: 0;
   border-radius: 1rem;
   background: transparent;
   color: rgba(212, 204, 234, 0.7);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
 }
 
@@ -6243,8 +6244,14 @@ textarea:focus-visible {
 }
 
 .mt-range-pill {
+  min-height: 2.95rem;
   justify-content: center;
   border-radius: 1.15rem;
+}
+
+.mt-range-pill span {
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .mt-range-pill--cross {
@@ -6301,12 +6308,12 @@ textarea:focus-visible {
 
 .mt-body-stage__list {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0.9rem;
+  right: 0.9rem;
   z-index: 1;
   display: grid;
   gap: 0.38rem;
-  width: min(10.5rem, 42%);
+  width: min(10rem, 41%);
 }
 
 .mt-body-stage__row {
@@ -6314,13 +6321,13 @@ textarea:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  min-height: 2.55rem;
+  min-height: 2.45rem;
   padding: 0 0.85rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(11, 12, 18, 0.72);
   color: rgba(219, 215, 240, 0.78);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-align: left;
   backdrop-filter: blur(16px);
@@ -6343,7 +6350,7 @@ textarea:focus-visible {
   bottom: 1rem;
   left: 1rem;
   z-index: 1;
-  padding: 0.95rem 1.05rem;
+  padding: 0.88rem 0.98rem;
   border-radius: 1.45rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -6585,7 +6592,8 @@ textarea:focus-visible {
 .mt-home-feature-card__copy p:last-child {
   margin: 0;
   color: rgba(232, 228, 246, 0.8);
-  line-height: 1.55;
+  max-width: 24rem;
+  line-height: 1.42;
 }
 
 .mt-home-feature-card__meta {
@@ -7124,12 +7132,14 @@ textarea:focus-visible {
   font-size: 1rem;
   letter-spacing: -0.04em;
   color: white;
+  text-wrap: balance;
 }
 
 .mt-home-mini-card span {
   font-size: 0.8rem;
   line-height: 1.45;
   color: var(--text-soft);
+  text-wrap: balance;
 }
 
 .mt-home-routine-rail {
@@ -7189,7 +7199,7 @@ textarea:focus-visible {
 
 .mt-routine-mini-card__copy p {
   font-size: 0.82rem;
-  line-height: 1.45;
+  line-height: 1.35;
   color: var(--text-soft);
 }
 
@@ -7259,7 +7269,9 @@ textarea:focus-visible {
 .mt-agenda-composer__head p:last-child {
   margin: 0;
   color: var(--text-soft);
-  line-height: 1.55;
+  max-width: 26rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .mt-schedule-entry {
