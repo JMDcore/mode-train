@@ -22,7 +22,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useFormStatus } from "react-dom";
 
 import { cn } from "@/lib/utils";
@@ -102,6 +102,11 @@ function splitRangeLabel(value: string) {
     start: start ?? value,
     end: end ?? value,
   };
+}
+
+function parseMetricNumber(value: string) {
+  const parsed = Number(String(value).replace(/[^\d.]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export function ModeTrainApp(props: {
@@ -207,101 +212,122 @@ function HomeScreen(props: {
   onNavigate: (tab: TabKey) => void;
 }) {
   const routineCards = props.snapshot.routines.slice(0, 3);
+  const featuredRoutine = props.snapshot.activeWorkoutSummary
+    ? props.snapshot.routines.find(
+        (routine) => routine.id === props.snapshot.activeWorkoutSummary?.routineId,
+      ) ?? props.snapshot.routines[0] ?? null
+    : props.snapshot.routines[0] ?? null;
+  const gymTodayCount = props.snapshot.schedule.todayEntries.filter((entry) => entry.entryType === "gym").length;
+  const runTodayCount = props.snapshot.schedule.todayEntries.filter((entry) => entry.entryType === "running").length;
+  const weekPlanned = props.snapshot.schedule.days.reduce((acc, day) => acc + day.plannedCount, 0);
 
   return (
     <div className="mt-screen mt-screen--home">
       <section className="mt-home-analytics">
-        <div className="mt-home-analytics__greeting">
-          <div className="mt-greeting">
-            <div className="mt-greeting__avatar">{props.user.initials}</div>
-            <div>
-              <p>{props.snapshot.dateLabel}</p>
-              <h2>
-                Hola, {props.snapshot.firstName}
-                <span> 👋</span>
-              </h2>
+        <div className="mt-home-analytics__art" aria-hidden="true">
+          <Image
+            src="/media/anatomy-mannequin.svg"
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 40vw"
+            className="mt-home-analytics__image"
+          />
+        </div>
+        <div className="mt-home-analytics__veil" aria-hidden="true" />
+
+        <div className="mt-home-analytics__surface">
+          <div className="mt-home-analytics__greeting">
+            <div className="mt-greeting">
+              <div className="mt-greeting__avatar">{props.user.initials}</div>
+              <div>
+                <p>{props.snapshot.dateLabel}</p>
+                <h2>
+                  Hola, {props.snapshot.firstName}
+                  <span> 👋</span>
+                </h2>
+              </div>
             </div>
-          </div>
-          <button
-            type="button"
-            className="mt-home-analytics__bell"
-            aria-label="Ir a agenda"
-            onClick={() => props.onNavigate("agenda")}
-          >
-            <span className="mt-home-analytics__bell-count">
-              {props.snapshot.schedule.todayEntries.length}
-            </span>
-            <Bell size={16} strokeWidth={2.2} />
-          </button>
-        </div>
-
-        <div className="mt-home-analytics__current">
-          <div>
-            <span>Actual</span>
-            <strong>{props.snapshot.routines.length} rutinas listas</strong>
-          </div>
-          <div className="mt-home-analytics__cluster" aria-hidden="true">
-            <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--violet" />
-            <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--lime" />
-            <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--pink" />
-            <Link href="/app/routines" className="mt-home-analytics__cluster-link">
-              Add +
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-home-period">
-          <button type="button" className="mt-home-period__control" aria-label="Periodo anterior">
-            <ChevronLeft size={16} strokeWidth={2.2} />
-          </button>
-          <div className="mt-home-period__label">Para esta semana</div>
-          <button type="button" className="mt-home-period__control" aria-label="Periodo siguiente">
-            <ChevronRight size={16} strokeWidth={2.2} />
-          </button>
-        </div>
-
-        <div className="mt-ring-grid mt-ring-grid--hero">
-          {props.snapshot.focusMetrics.map((metric) => (
-            <RingMetric key={metric.key} metric={metric} />
-          ))}
-        </div>
-
-        <div className="mt-home-analytics__actions">
-          <button
-            type="button"
-            className="mt-home-inline-action"
-            onClick={() => props.onNavigate("agenda")}
-          >
-            <CalendarDays size={16} strokeWidth={2.2} />
-            Agenda
-          </button>
-          <button
-            type="button"
-            className="mt-home-inline-action mt-home-inline-action--accent"
-            onClick={() => props.onNavigate("summary")}
-          >
-            <Activity size={16} strokeWidth={2.2} />
-            Resumen
-          </button>
-        </div>
-
-        <div className="mt-week-strip mt-week-strip--hero">
-          {props.snapshot.schedule.days.map((day) => (
             <button
-              key={day.isoDate}
               type="button"
-              className={cn(
-                "mt-week-dot",
-                day.isToday && "mt-week-dot--today",
-                day.plannedCount + day.completedCount > 0 && "mt-week-dot--filled",
-              )}
+              className="mt-home-analytics__bell"
+              aria-label="Ir a agenda"
               onClick={() => props.onNavigate("agenda")}
             >
-              <span className="mt-week-dot__count">{day.plannedCount + day.completedCount}</span>
-              <span className="mt-week-dot__ring" />
-              <span className="mt-week-dot__label">{day.dayShort}</span>
+              <span className="mt-home-analytics__bell-count">
+                {props.snapshot.schedule.todayEntries.length}
+              </span>
+              <Bell size={16} strokeWidth={2.2} />
             </button>
-          ))}
+          </div>
+
+          <div className="mt-home-analytics__current">
+            <div>
+              <span>Actual</span>
+              <strong>{props.snapshot.routines.length} rutinas listas</strong>
+            </div>
+            <div className="mt-home-analytics__cluster" aria-hidden="true">
+              <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--violet" />
+              <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--lime" />
+              <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--pink" />
+              <Link href="/app/routines" className="mt-home-analytics__cluster-link">
+                Add +
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-home-period">
+            <button type="button" className="mt-home-period__control" aria-label="Periodo anterior">
+              <ChevronLeft size={16} strokeWidth={2.2} />
+            </button>
+            <div className="mt-home-period__label">Para esta semana</div>
+            <button type="button" className="mt-home-period__control" aria-label="Periodo siguiente">
+              <ChevronRight size={16} strokeWidth={2.2} />
+            </button>
+          </div>
+
+          <div className="mt-ring-grid mt-ring-grid--hero">
+            {props.snapshot.focusMetrics.map((metric) => (
+              <RingMetric key={metric.key} metric={metric} />
+            ))}
+          </div>
+
+          <div className="mt-home-analytics__actions">
+            <button
+              type="button"
+              className="mt-home-inline-action"
+              onClick={() => props.onNavigate("agenda")}
+            >
+              <CalendarDays size={16} strokeWidth={2.2} />
+              Agenda
+            </button>
+            <button
+              type="button"
+              className="mt-home-inline-action mt-home-inline-action--accent"
+              onClick={() => props.onNavigate("summary")}
+            >
+              <Activity size={16} strokeWidth={2.2} />
+              Resumen
+            </button>
+          </div>
+
+          <div className="mt-week-strip mt-week-strip--hero">
+            {props.snapshot.schedule.days.map((day) => (
+              <button
+                key={day.isoDate}
+                type="button"
+                className={cn(
+                  "mt-week-dot",
+                  day.isToday && "mt-week-dot--today",
+                  day.plannedCount + day.completedCount > 0 && "mt-week-dot--filled",
+                )}
+                onClick={() => props.onNavigate("agenda")}
+              >
+                <span className="mt-week-dot__count">{day.plannedCount + day.completedCount}</span>
+                <span className="mt-week-dot__ring" />
+                <span className="mt-week-dot__label">{day.dayShort}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -309,11 +335,46 @@ function HomeScreen(props: {
         <div className="mt-inline-note">{props.completionMessage}</div>
       ) : null}
 
+      <section className="mt-home-focusboard">
+        <div className="mt-program-board__head">
+          <div>
+            <span>Bloque principal</span>
+            <strong>
+              {featuredRoutine
+                ? props.snapshot.activeWorkoutSummary
+                  ? "Sesion abierta y lista para continuar"
+                  : "Plantilla principal de la semana"
+                : "Base pendiente"}
+            </strong>
+          </div>
+          <button type="button" onClick={() => props.onNavigate("agenda")}>
+            Ver agenda
+          </button>
+        </div>
+
+        {featuredRoutine ? (
+          <HomeFeatureCard
+            routine={featuredRoutine}
+            activeSessionId={props.snapshot.activeWorkoutSummary?.sessionId ?? null}
+            scheduledCount={weekPlanned}
+            gymTodayCount={gymTodayCount}
+            runTodayCount={runTodayCount}
+            levelLabel={props.snapshot.levelLabel}
+            goalLabel={props.snapshot.goalLabel}
+          />
+        ) : (
+          <div className="mt-empty-panel">
+            <strong>Sin plantilla principal todavia</strong>
+            <span>Crea una rutina para que la app empiece a parecerse a tu semana real.</span>
+          </div>
+        )}
+      </section>
+
       <section className="mt-program-board">
         <div className="mt-program-board__head">
           <div>
-            <span>Rutinas guardadas</span>
-            <strong>{routineCards.length > 0 ? "Tus bloques listos para usar" : "Todavia no hay plantillas"}</strong>
+            <span>Biblioteca activa</span>
+            <strong>{routineCards.length > 0 ? "Tus siguientes bloques" : "Todavia no hay plantillas"}</strong>
           </div>
           <Link href="/app/routines">Ver todas</Link>
         </div>
@@ -345,6 +406,81 @@ function HomeScreen(props: {
         )}
       </section>
     </div>
+  );
+}
+
+function HomeFeatureCard(props: {
+  routine: AppSnapshot["routines"][number];
+  activeSessionId: string | null;
+  scheduledCount: number;
+  gymTodayCount: number;
+  runTodayCount: number;
+  levelLabel: string;
+  goalLabel: string;
+}) {
+  const hasAgenda = props.gymTodayCount + props.runTodayCount > 0;
+
+  return (
+    <article className="mt-home-feature-card">
+      <div className="mt-home-feature-card__art" aria-hidden="true">
+        <Image
+          src="/media/anatomy-mannequin.svg"
+          alt=""
+          fill
+          sizes="(max-width: 768px) 100vw, 40vw"
+          className="mt-home-feature-card__image"
+        />
+      </div>
+      <div className="mt-home-feature-card__veil" aria-hidden="true" />
+
+      <div className="mt-home-feature-card__body">
+        <div className="mt-home-feature-card__top">
+          <span className="mt-chip mt-chip--violet">{props.levelLabel}</span>
+          <span className="mt-chip mt-chip--lime">
+            {props.routine.itemCount > 0 ? `${props.routine.itemCount} ejercicios` : "Vacia"}
+          </span>
+        </div>
+
+        <div className="mt-home-feature-card__copy">
+          <p className="mt-kicker">Bloque curado</p>
+          <h3>{props.routine.name}</h3>
+          <p>
+            {hasAgenda
+              ? `${props.gymTodayCount} gym · ${props.runTodayCount} running hoy. Todo listo para ${props.goalLabel.toLowerCase()}.`
+              : `Plantilla principal preparada para registrar sets y construir progreso real.`}
+          </p>
+        </div>
+
+        <div className="mt-home-feature-card__meta">
+          <div className="mt-home-feature-card__metric">
+            <span>Semana</span>
+            <strong>{props.scheduledCount} eventos</strong>
+          </div>
+          <div className="mt-home-feature-card__metric">
+            <span>Hoy</span>
+            <strong>{props.gymTodayCount + props.runTodayCount}</strong>
+          </div>
+        </div>
+
+        <div className="mt-home-feature-card__footer">
+          {props.activeSessionId ? (
+            <Link href={`/app/workouts/${props.activeSessionId}`} className="mt-primary-pill mt-primary-pill--compact">
+              <span className="mt-primary-pill__play" />
+              Continuar
+            </Link>
+          ) : (
+            <StartWorkoutButton
+              routineTemplateId={props.routine.id}
+              label="Entrenar"
+              className="mt-primary-pill mt-primary-pill--compact"
+            />
+          )}
+          <Link href="/app/routines" className="mt-secondary-pill">
+            Gestionar
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -437,7 +573,7 @@ function AgendaScreen(props: {
 
   return (
     <div className="mt-screen">
-      <section className="mt-planner-card">
+      <section className="mt-planner-card mt-planner-card--feature">
         <div className="mt-planner-card__head">
           <div>
             <p className="mt-kicker">Agenda</p>
@@ -446,6 +582,30 @@ function AgendaScreen(props: {
           <span className="mt-chip mt-chip--ghost">
             {selectedDay?.plannedCount ?? 0} eventos
           </span>
+        </div>
+
+        <div className="mt-agenda-overview">
+          <div className="mt-agenda-overview__copy">
+            <p className="mt-kicker">Dia activo</p>
+            <h3>{selectedDay?.dayLabel}</h3>
+            <p>
+              {selectedDay?.plannedCount ?? 0} planificados · {selectedDay?.completedCount ?? 0} registrados
+            </p>
+          </div>
+          <div className="mt-agenda-overview__stats">
+            <div className="mt-agenda-overview__stat">
+              <span>Gym</span>
+              <strong>
+                {selectedDay?.entries.filter((entry) => entry.entryType === "gym").length ?? 0}
+              </strong>
+            </div>
+            <div className="mt-agenda-overview__stat">
+              <span>Run</span>
+              <strong>
+                {selectedDay?.entries.filter((entry) => entry.entryType === "running").length ?? 0}
+              </strong>
+            </div>
+          </div>
         </div>
 
         <div className="mt-day-selector">
@@ -463,15 +623,6 @@ function AgendaScreen(props: {
         </div>
 
         <div className="mt-planner-card__body">
-          <div className="mt-planner-card__dayhead">
-            <div>
-              <h3>{selectedDay?.dayLabel}</h3>
-              <p>
-                {selectedDay?.plannedCount ?? 0} planificados · {selectedDay?.completedCount ?? 0} registrados
-              </p>
-            </div>
-          </div>
-
           {selectedDay && selectedDay.entries.length > 0 ? (
             <div className="mt-planner-list">
               {selectedDay.entries.map((entry) => (
@@ -490,10 +641,10 @@ function AgendaScreen(props: {
       <section className="mt-agenda-composer">
         <div className="mt-agenda-composer__tabs">
           {[
-            { key: "plan-gym", label: "Plan gym" },
-            { key: "plan-running", label: "Plan run" },
-            { key: "log-gym", label: "Gym hecho" },
-            { key: "log-running", label: "Run hecho" },
+            { key: "plan-gym", label: "Gym", icon: Dumbbell },
+            { key: "plan-running", label: "Run", icon: Footprints },
+            { key: "log-gym", label: "Gym hecho", icon: PencilLine },
+            { key: "log-running", label: "Run hecho", icon: Route },
           ].map((item) => (
             <button
               key={item.key}
@@ -506,6 +657,7 @@ function AgendaScreen(props: {
                 setComposerMode(item.key as "plan-gym" | "plan-running" | "log-gym" | "log-running")
               }
             >
+              <item.icon size={15} strokeWidth={2.2} />
               {item.label}
             </button>
           ))}
@@ -544,6 +696,15 @@ function SummaryScreen(props: {
     props.snapshot.summary.gymRecords.find((record) => record.exerciseId === selectedGymRecordId) ??
     props.snapshot.summary.gymRecords[0] ??
     null;
+  const gymSessions = parseMetricNumber(props.snapshot.summary.gym[scope].sessions);
+  const runningSessions = parseMetricNumber(props.snapshot.summary.running[scope].sessions);
+  const routinesCount = props.snapshot.routines.length;
+  const totalMix = Math.max(gymSessions + runningSessions + routinesCount, 1);
+  const generalMix = {
+    gym: Math.max(0.12, gymSessions / totalMix),
+    running: Math.max(0.12, runningSessions / totalMix),
+    routines: Math.max(0.08, routinesCount / totalMix),
+  };
 
   return (
     <div className="mt-screen">
@@ -605,6 +766,40 @@ function SummaryScreen(props: {
 
         {mode === "general" ? (
           <div className="mt-summary-stack">
+            <section className="mt-summary-hero-card">
+              <div className="mt-summary-hero-card__head">
+                <div>
+                  <p className="mt-kicker">General</p>
+                  <h3>Balance del bloque</h3>
+                </div>
+                <span className="mt-chip mt-chip--lime">{scope === "week" ? "7 dias" : scope === "month" ? "30 dias" : "Total"}</span>
+              </div>
+
+              <div className="mt-summary-hero-card__body">
+                <div
+                  className="mt-summary-mix"
+                  style={
+                    {
+                      "--mix-gym": `${generalMix.gym}`,
+                      "--mix-running": `${generalMix.running}`,
+                      "--mix-routines": `${generalMix.routines}`,
+                    } as CSSProperties
+                  }
+                >
+                  <div className="mt-summary-mix__center">
+                    <span>Bloque</span>
+                    <strong>{gymSessions + runningSessions}</strong>
+                  </div>
+                </div>
+
+                <div className="mt-summary-legend">
+                  <SummaryLegend tone="pink" label="Gym" value={props.snapshot.summary.gym[scope].sessions} />
+                  <SummaryLegend tone="lime" label="Running" value={props.snapshot.summary.running[scope].sessions} />
+                  <SummaryLegend tone="cyan" label="Rutinas" value={`${routinesCount}`} />
+                </div>
+              </div>
+            </section>
+
             <div className="mt-summary-grid">
               <SummaryMetricCard
                 icon={Dumbbell}
@@ -773,15 +968,43 @@ function SummaryScreen(props: {
               </div>
             </section>
 
-            <SummaryMetricCard
-              icon={Footprints}
-              label="Running"
-              metric={props.snapshot.summary.running[scope]}
-              tone="lime"
-            />
+            <div className="mt-summary-grid">
+              <SummaryMetricCard
+                icon={Footprints}
+                label="Running"
+                metric={props.snapshot.summary.running[scope]}
+                tone="lime"
+              />
+              <SummaryMetricCard
+                icon={CalendarDays}
+                label="Agenda"
+                metric={{
+                  sessions: `${props.snapshot.schedule.todayEntries.filter((entry) => entry.entryType === "running").length}`,
+                  support: "running hoy",
+                  highlight: props.snapshot.summary.runningRecords.longestDistance,
+                }}
+                tone="violet"
+              />
+            </div>
           </div>
         ) : null}
       </section>
+    </div>
+  );
+}
+
+function SummaryLegend(props: {
+  tone: "pink" | "lime" | "cyan";
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="mt-summary-legend__item">
+      <span className={cn("mt-summary-legend__swatch", `mt-summary-legend__swatch--${props.tone}`)} />
+      <div>
+        <strong>{props.label}</strong>
+        <span>{props.value}</span>
+      </div>
     </div>
   );
 }

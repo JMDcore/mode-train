@@ -184,6 +184,7 @@ function WorkoutExerciseCard(props: {
 }) {
   const [state, formAction] = useActionState(saveWorkoutExerciseBlockAction, initialBlockState);
   const [sets, setSets] = useState<SetDraft[]>(() => buildInitialSetDrafts(props.exercise));
+  const completed = props.exercise.currentSets.length >= props.exercise.targetSets && props.exercise.currentSets.length > 0;
 
   const setsJson = useMemo(
     () =>
@@ -209,9 +210,11 @@ function WorkoutExerciseCard(props: {
         <div className="session-card__head-actions">
           <span className="detail-badge">
             <Trophy size={14} strokeWidth={2.3} />
-            {props.exercise.currentSets.length > 0
-              ? `${props.exercise.currentSets.length} guardados`
-              : "Pendiente"}
+            {completed
+              ? "Completo"
+              : props.exercise.currentSets.length > 0
+                ? `${props.exercise.currentSets.length} guardados`
+                : "Pendiente"}
           </span>
           <button type="button" className="session-card__toggle" onClick={props.onToggle}>
             {props.expanded ? (
@@ -223,23 +226,25 @@ function WorkoutExerciseCard(props: {
         </div>
       </div>
 
-      <div className="session-meta-row">
-        <span>
-          Objetivo {props.exercise.targetSets} x {props.exercise.targetRepsMin}-{props.exercise.targetRepsMax}
-        </span>
-        <span>
-          <Clock3 size={14} strokeWidth={2.2} />
-          {props.exercise.restSeconds ?? 0}s
-        </span>
-        {props.exercise.targetRir !== null ? <span>RIR {props.exercise.targetRir}</span> : null}
-      </div>
-
-      {props.exercise.lastPerformanceSummary ? (
-        <div className="session-note">
-          <strong>Ultimo registro</strong>
-          <span>{props.exercise.lastPerformanceSummary}</span>
+      <div className="session-card__overview">
+        <div className="session-meta-row">
+          <span>
+            Objetivo {props.exercise.targetSets} x {props.exercise.targetRepsMin}-{props.exercise.targetRepsMax}
+          </span>
+          <span>
+            <Clock3 size={14} strokeWidth={2.2} />
+            {props.exercise.restSeconds ?? 0}s
+          </span>
+          {props.exercise.targetRir !== null ? <span>RIR {props.exercise.targetRir}</span> : null}
         </div>
-      ) : null}
+
+        {props.exercise.lastPerformanceSummary ? (
+          <div className="session-note">
+            <strong>Ultimo registro</strong>
+            <span>{props.exercise.lastPerformanceSummary}</span>
+          </div>
+        ) : null}
+      </div>
 
       {props.expanded ? (
         <form action={formAction} className="session-form">
@@ -248,6 +253,13 @@ function WorkoutExerciseCard(props: {
           <input type="hidden" name="setsJson" value={setsJson} />
 
           <div className="session-sets">
+            <div className="session-sets__hero">
+              <div>
+                <span className="session-sets__eyebrow">Registro por serie</span>
+                <strong>{props.exercise.exerciseName}</strong>
+              </div>
+              <span className="session-sets__badge">{sets.length} sets</span>
+            </div>
             <div className="set-table-head" aria-hidden="true">
               <span>Set</span>
               <span>Kg</span>
@@ -382,7 +394,7 @@ function CompleteWorkoutCard(props: { sessionId: string }) {
   const [state, formAction] = useActionState(completeWorkoutSessionAction, initialCompleteState);
 
   return (
-    <section className="detail-card detail-card--surface">
+    <section className="detail-card detail-card--surface complete-session-card">
       <div className="detail-card__head">
         <div>
           <p className="detail-kicker">Cerrar sesion</p>
