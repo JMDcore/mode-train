@@ -363,22 +363,22 @@ export function AnatomyFocusArt(props: AnatomyFocusArtProps) {
           <stop offset="1" stopColor={`${theme.trailB}26`} />
         </linearGradient>
         <radialGradient id={`${id}-ambient-left`} cx="0" cy="0" r="1" gradientTransform="translate(180 188) rotate(90) scale(180)">
-          <stop stopColor={`${theme.ambientLeft}66`} />
+          <stop stopColor={`${theme.ambientLeft}33`} />
           <stop offset="1" stopColor={`${theme.ambientLeft}00`} />
         </radialGradient>
         <radialGradient id={`${id}-ambient-right`} cx="0" cy="0" r="1" gradientTransform="translate(580 204) rotate(90) scale(160)">
-          <stop stopColor={`${theme.ambientRight}73`} />
+          <stop stopColor={`${theme.ambientRight}3d`} />
           <stop offset="1" stopColor={`${theme.ambientRight}00`} />
         </radialGradient>
         <filter id={`${id}-glow`} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="16" result="blur" />
+          <feGaussianBlur stdDeviation="9" result="blur" />
           <feBlend in="SourceGraphic" in2="blur" mode="screen" />
         </filter>
       </defs>
 
       <g opacity={frame === "full" ? "0.28" : "0.22"}>
-        <circle cx="182" cy="198" r="126" fill={`url(#${id}-ambient-left)`} />
-        <circle cx="584" cy="196" r="98" fill={`url(#${id}-ambient-right)`} />
+        <circle cx="182" cy="198" r="112" fill={`url(#${id}-ambient-left)`} />
+        <circle cx="584" cy="196" r="86" fill={`url(#${id}-ambient-right)`} />
       </g>
 
       <g opacity={frame === "full" ? "0.16" : "0.1"}>

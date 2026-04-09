@@ -214,7 +214,7 @@ function HomeScreen(props: {
   completionMessage: string | null;
   onNavigate: (tab: TabKey) => void;
 }) {
-  const routineCards = props.snapshot.routines.slice(0, 3);
+  const routineCards = props.snapshot.routines.slice(0, 2);
   const featuredRoutine = props.snapshot.activeWorkoutSummary
     ? props.snapshot.routines.find(
         (routine) => routine.id === props.snapshot.activeWorkoutSummary?.routineId,
@@ -267,12 +267,9 @@ function HomeScreen(props: {
               <span>Actual</span>
               <strong>{props.snapshot.routines.length} rutinas listas</strong>
             </div>
-            <div className="mt-home-analytics__cluster" aria-hidden="true">
-              <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--violet" />
-              <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--lime" />
-              <span className="mt-home-analytics__cluster-dot mt-home-analytics__cluster-dot--pink" />
+            <div className="mt-home-analytics__cluster">
               <Link href="/app/routines" className="mt-home-analytics__cluster-link">
-                Add +
+                Ver rutinas
               </Link>
             </div>
           </div>
