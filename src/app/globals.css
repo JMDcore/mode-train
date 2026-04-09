@@ -6920,3 +6920,133 @@ textarea:focus-visible {
     justify-self: center;
   }
 }
+
+/* Body + Workout fidelity pass */
+
+.mt-body-stage__hud {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1;
+  display: grid;
+  gap: 0.55rem;
+  width: min(8.5rem, 36%);
+}
+
+.mt-body-stage__hud-item {
+  display: grid;
+  gap: 0.16rem;
+  padding: 0.78rem 0.88rem;
+  border-radius: 1.22rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(143, 98, 255, 0.12), transparent 30%),
+    rgba(11, 12, 18, 0.72);
+  backdrop-filter: blur(16px);
+}
+
+.mt-body-stage__hud-item span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(220, 212, 232, 0.54);
+}
+
+.mt-body-stage__hud-item strong {
+  font-size: 1.08rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: white;
+}
+
+.mt-body-stage__row-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.mt-body-stage__row-main svg {
+  color: rgba(183, 245, 66, 0.84);
+}
+
+.mt-body-stage__measure-aside {
+  display: grid;
+  justify-items: end;
+  gap: 0.08rem;
+}
+
+.mt-body-stage__measure-aside small {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(234, 226, 238, 0.54);
+}
+
+.session-card__identity {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.session-card__index {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 1.85rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(143, 98, 255, 0.18);
+  background: rgba(143, 98, 255, 0.12);
+  color: rgba(229, 215, 255, 0.9);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.session-card__head {
+  gap: 1rem;
+}
+
+.session-card__head-actions {
+  align-self: center;
+}
+
+.session-card__overview {
+  padding: 0.2rem 0 0.05rem;
+}
+
+.session-card__preview {
+  align-items: end;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(143, 98, 255, 0.08), transparent 24%),
+    rgba(255, 255, 255, 0.026);
+}
+
+.session-card__preview strong {
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 420px) {
+  .mt-body-stage__hud {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 1rem 1rem 0;
+  }
+
+  .mt-body-stage__measure-aside {
+    justify-items: start;
+  }
+
+  .session-card__head-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

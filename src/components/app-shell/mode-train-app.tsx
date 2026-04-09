@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
+  ArrowUpRight,
   Bell,
   CalendarDays,
   ChevronLeft,
@@ -696,6 +697,7 @@ function SummaryScreen(props: {
     props.snapshot.summary.gymRecords.find((record) => record.exerciseId === selectedGymRecordId) ??
     props.snapshot.summary.gymRecords[0] ??
     null;
+  const bodyRecords = props.snapshot.summary.gymRecords.slice(0, 6);
   const gymSessions = parseMetricNumber(props.snapshot.summary.gym[scope].sessions);
   const runningSessions = parseMetricNumber(props.snapshot.summary.running[scope].sessions);
   const routinesCount = props.snapshot.routines.length;
@@ -853,6 +855,17 @@ function SummaryScreen(props: {
         {mode === "body" ? (
           <div className="mt-summary-stack">
             <section className="mt-body-stage">
+              <div className="mt-body-stage__hud">
+                <div className="mt-body-stage__hud-item">
+                  <span>Serie top</span>
+                  <strong>{selectedGymRecord?.weightLabel ?? "--"}</strong>
+                </div>
+                <div className="mt-body-stage__hud-item">
+                  <span>Records</span>
+                  <strong>{props.snapshot.summary.gymRecords.length}</strong>
+                </div>
+              </div>
+
               <div className="mt-body-stage__art">
                 <Image
                   src="/media/anatomy-mannequin.svg"
@@ -868,16 +881,19 @@ function SummaryScreen(props: {
                   <div className="mt-body-stage__measure">
                     <div>
                       <strong>{selectedGymRecord.exerciseName}</strong>
-                      <span>{selectedGymRecord.dateLabel}</span>
+                      <span>Top set · {selectedGymRecord.dateLabel}</span>
                     </div>
-                    <em>{selectedGymRecord.weightLabel}</em>
+                    <div className="mt-body-stage__measure-aside">
+                      <small>Actual</small>
+                      <em>{selectedGymRecord.weightLabel}</em>
+                    </div>
                   </div>
                 ) : null}
               </div>
 
               <div className="mt-body-stage__list">
-                {props.snapshot.summary.gymRecords.length > 0 ? (
-                  props.snapshot.summary.gymRecords.slice(0, 6).map((record) => (
+                {bodyRecords.length > 0 ? (
+                  bodyRecords.map((record) => (
                     <button
                       key={record.exerciseId}
                       type="button"
@@ -888,7 +904,10 @@ function SummaryScreen(props: {
                       onClick={() => setSelectedGymRecordId(record.exerciseId)}
                     >
                       <span>{record.exerciseName}</span>
-                      <strong>{record.weightLabel}</strong>
+                      <div className="mt-body-stage__row-main">
+                        <strong>{record.weightLabel}</strong>
+                        <ArrowUpRight size={13} strokeWidth={2.2} />
+                      </div>
                     </button>
                   ))
                 ) : (

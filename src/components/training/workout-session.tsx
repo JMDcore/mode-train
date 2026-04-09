@@ -154,11 +154,13 @@ export function WorkoutSession(props: {
           </div>
 
           <div className="detail-stack">
-            {props.detail.exercises.map((exercise) => (
+            {props.detail.exercises.map((exercise, index) => (
               <WorkoutExerciseCard
                 key={`${exercise.routineItemId}-${exercise.currentSets.map((set) => `${set.setNumber}:${set.weightKg ?? ""}:${set.reps ?? ""}:${set.rir ?? ""}`).join("|")}`}
                 exercise={exercise}
                 sessionId={props.detail.sessionId}
+                index={index}
+                totalExercises={props.detail.totalExercises}
                 expanded={expandedExerciseId === exercise.routineItemId}
                 onToggle={() =>
                   setExpandedExerciseId((current) =>
@@ -179,6 +181,8 @@ export function WorkoutSession(props: {
 function WorkoutExerciseCard(props: {
   sessionId: string;
   exercise: WorkoutSessionDetail["exercises"][number];
+  index: number;
+  totalExercises: number;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -201,7 +205,8 @@ function WorkoutExerciseCard(props: {
   return (
     <article className="session-card">
       <div className="session-card__head">
-        <div>
+        <div className="session-card__identity">
+          <span className="session-card__index">{String(props.index + 1).padStart(2, "0")}</span>
           <h2>{props.exercise.exerciseName}</h2>
           <p>
             {props.exercise.primaryMuscleGroup} · {props.exercise.equipment}
@@ -228,6 +233,9 @@ function WorkoutExerciseCard(props: {
 
       <div className="session-card__overview">
         <div className="session-meta-row">
+          <span>
+            Bloque {props.index + 1}/{props.totalExercises}
+          </span>
           <span>
             Objetivo {props.exercise.targetSets} x {props.exercise.targetRepsMin}-{props.exercise.targetRepsMax}
           </span>
