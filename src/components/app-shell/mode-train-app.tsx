@@ -561,11 +561,18 @@ function AgendaScreen(props: {
 
         <div className="mt-agenda-overview">
           <div className="mt-agenda-overview__copy">
-            <p className="mt-kicker">Dia activo</p>
+            <span className="mt-agenda-overview__eyebrow">Dia activo</span>
             <h3>{selectedDay?.dayLabel}</h3>
-            <p>
-              {selectedDay?.plannedCount ?? 0} planificados · {selectedDay?.completedCount ?? 0} registrados
-            </p>
+            <div className="mt-agenda-overview__summary">
+              <div className="mt-agenda-overview__summary-row">
+                <span>Planificados</span>
+                <strong>{selectedDay?.plannedCount ?? 0}</strong>
+              </div>
+              <div className="mt-agenda-overview__summary-row">
+                <span>Registrados</span>
+                <strong>{selectedDay?.completedCount ?? 0}</strong>
+              </div>
+            </div>
           </div>
           <div className="mt-agenda-overview__stats">
             <div className="mt-agenda-overview__stat">
@@ -573,7 +580,7 @@ function AgendaScreen(props: {
               <strong>{weekPlanned}</strong>
             </div>
             <div className="mt-agenda-overview__stat">
-              <span>Registrados</span>
+              <span>Hechos</span>
               <strong>{weekLogged}</strong>
             </div>
             <div className="mt-agenda-overview__stat">
