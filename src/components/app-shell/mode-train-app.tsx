@@ -1547,20 +1547,22 @@ function RingMetric(props: {
 
   return (
     <div className="mt-ring-card">
-      <svg viewBox="0 0 100 100" className="mt-ring-card__chart" aria-hidden="true">
-        <circle cx="50" cy="50" r={radius} className="mt-ring-card__track" />
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          className={cn("mt-ring-card__progress", `mt-ring-card__progress--${props.metric.tone}`)}
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-        />
-      </svg>
-      <span className="mt-ring-card__icon" aria-hidden="true">
-        <Icon size={18} strokeWidth={2.2} />
-      </span>
+      <div className="mt-ring-card__ring">
+        <svg viewBox="0 0 100 100" className="mt-ring-card__chart" aria-hidden="true">
+          <circle cx="50" cy="50" r={radius} className="mt-ring-card__track" />
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            className={cn("mt-ring-card__progress", `mt-ring-card__progress--${props.metric.tone}`)}
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+          />
+        </svg>
+        <span className="mt-ring-card__icon" aria-hidden="true">
+          <Icon size={18} strokeWidth={2.2} />
+        </span>
+      </div>
       <div className="mt-ring-card__copy">
         <strong>{props.metric.value}</strong>
         <span>{props.metric.label}</span>

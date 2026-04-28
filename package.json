@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "scripts/with-docker-db.sh node --import tsx scripts/seed-system-data.ts",
+    "demo:seed": "scripts/with-docker-db.sh node --import tsx scripts/seed-demo-account.ts",
     "auth:smoke": "scripts/with-docker-db.sh node --import tsx scripts/smoke-auth.ts",
     "starter:smoke": "scripts/with-docker-db.sh node --import tsx scripts/smoke-starter-plan.ts",
     "routine-editor:smoke": "scripts/with-docker-db.sh node --import tsx scripts/smoke-routine-editor.ts",
